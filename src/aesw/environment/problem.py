@@ -228,7 +228,9 @@ class ProblemDefinition:
         )
 
         # 5. Observation spec
-        observation_spec = ObservationSpecification(neighbor_budget=4)
+        w_cfg = exp_data.get("walker", {})
+        neighbor_budget = int(w_cfg.get("neighbor_budget", 4))
+        observation_spec = ObservationSpecification(neighbor_budget=neighbor_budget)
 
         # 6. Delay spec
         delay_spec = DelaySpecification(

@@ -11,15 +11,19 @@ The detailed DetectionResult (containing ground-truth target distance and classi
 is an internal environment object. Search walkers only receive the binary/noisy observation.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 from collections import deque
 import numpy as np
 
 from aesw.environment.types import DetectionOutcome
 from aesw.environment.problem import DetectionSpecification
-from aesw.dynamics.view import ActiveGraphView
 from aesw.utils.reproducibility import create_rng
+
+if TYPE_CHECKING:
+    from aesw.dynamics.view import ActiveGraphView
 
 
 @dataclass(frozen=True)
@@ -45,6 +49,11 @@ class DetectionResult:
     outcome: DetectionOutcome
     positive_signal: bool
     timestamp: int
+
+    @property
+    def signal(self) -> bool:
+        """Convenience property for binary positive signal."""
+        return self.positive_signal
 
 
 class DetectionEngine:

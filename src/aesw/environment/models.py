@@ -138,6 +138,7 @@ class WalkerState:
     step_count: int = 0
     message_count: int = 0
     busy_until_time: int = 0
+    local_history: Optional[Any] = None
 
     def __post_init__(self) -> None:
         if self.walker_id is None:

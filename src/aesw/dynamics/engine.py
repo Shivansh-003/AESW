@@ -151,6 +151,21 @@ class DynamicGraphState:
             raise KeyError(f"Edge ({u}, {v}) does not exist in underlying static graph")
         return self._edge_states[key] == EdgeState.ON
 
+    def set_edge_state(self, u: int | str, v: int | str, state: EdgeState) -> None:
+        """Manually set state of edge (u, v) for testing or scenario configuration.
+
+        Args:
+            u: First endpoint.
+            v: Second endpoint.
+            state: Desired EdgeState (ON or OFF).
+        """
+        if not isinstance(state, EdgeState):
+            raise TypeError(f"state must be an EdgeState instance, got {type(state).__name__}")
+        key = frozenset([u, v])
+        if key not in self._edge_states:
+            raise KeyError(f"Edge ({u}, {v}) does not exist in underlying static graph")
+        self._edge_states[key] = state
+
     def active_edges(self) -> list[frozenset[int | str]]:
         """Return list of endpoint frozensets for all currently ON edges."""
         return [k for k, state in self._edge_states.items() if state == EdgeState.ON]

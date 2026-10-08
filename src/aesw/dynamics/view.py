@@ -64,6 +64,10 @@ class ActiveGraphView:
         except KeyError:
             return False
 
+    def is_edge_active(self, u: int | str, v: int | str) -> bool:
+        """Check if edge (u, v) is currently active (ON). Alias for has_active_edge."""
+        return self.has_active_edge(u, v)
+
     def active_degree(self, node_id: int | str) -> int:
         """Degree of node_id in active sub-network G_t."""
         return len(self.active_neighbors(node_id))

@@ -18,6 +18,7 @@ experiments:
 
   walker:
     count: 5
+    neighbor_budget: 4
 
   target:
     mode: "moving"  # Options: static, moving

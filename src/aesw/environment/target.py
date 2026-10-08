@@ -9,14 +9,18 @@ The target state produced and managed here is unobserved ground-truth state.
 It must NEVER be directly exposed to search walkers or observation objects.
 """
 
-from typing import Optional, Sequence
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Sequence
 import numpy as np
 
 from aesw.environment.types import TargetMode
 from aesw.environment.models import TargetState
 from aesw.environment.problem import TargetSpecification
-from aesw.dynamics.view import ActiveGraphView
 from aesw.utils.reproducibility import create_rng
+
+if TYPE_CHECKING:
+    from aesw.dynamics.view import ActiveGraphView
 
 
 class TargetEngine:

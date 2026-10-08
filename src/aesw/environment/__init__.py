@@ -24,6 +24,7 @@ from aesw.environment.observation import (
     ObservedEdgeInfo,
     TargetSignalObservation,
     Observation,
+    LocalObservationHistory,
 )
 from aesw.environment.problem import (
     GraphSpecification,
@@ -38,6 +39,7 @@ from aesw.environment.problem import (
 )
 from aesw.environment.target import TargetEngine
 from aesw.environment.detection import DetectionEngine, DetectionResult
+from aesw.environment.builder import ObservationBuilder
 
 __all__ = [
     # Types
@@ -57,6 +59,7 @@ __all__ = [
     "ObservedEdgeInfo",
     "TargetSignalObservation",
     "Observation",
+    "LocalObservationHistory",
     # Specifications
     "GraphSpecification",
     "DynamicsSpecification",
@@ -71,4 +74,5 @@ __all__ = [
     "TargetEngine",
     "DetectionEngine",
     "DetectionResult",
+    "ObservationBuilder",
 ]

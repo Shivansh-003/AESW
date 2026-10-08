@@ -67,13 +67,27 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 6. Simulation Environment Coordinator & Controlled Observation
-- **Status**: *Planned*
-- **Scope**: Central discrete-time simulation coordinator orchestrating graph state updates, moving target positions, traversal delays, and enforcing the Controlled Observation Principle across search agents.
+## 6. Observation & Partial Visibility Layer
+- **Status**: **Completed**
+- **Scope**:
+  - Architectural information firewall projecting unobserved ground-truth state to local walker observations.
+  - Observation builder engine ([`ObservationBuilder`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/environment/builder.py)) enforcing partial visibility over active graph $G_t = (V, E_t)$.
+  - Neighbor checking budget $B$ limiting candidate inspections with uniform sampling under degree > $B$.
+  - Detection signal transformation reducing ground-truth sensor records to binary observable signals (`detected: bool`) with zero outcome or distance leakage.
+  - Clear epistemic differentiation between known absent edges and uninspected/unknown nodes.
+  - Immutable observation history tracking ([`LocalObservationHistory`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/environment/observation.py)) under snapshot semantics.
+  - Decoupled, isolated PRNG stream for observation neighbor sampling.
+  - 17 automated tests (104 total passing suite).
 
 ---
 
-## 7. Generic Walker Abstractions & Interfaces
+## 7. Simulation Environment Coordinator
+- **Status**: *Planned*
+- **Scope**: Central discrete-time simulation coordinator orchestrating dynamic edge transitions, target movements, traversal delays, and multi-walker step scheduling.
+
+---
+
+## 8. Generic Walker Abstractions & Interfaces
 - **Status**: *Planned*
 - **Scope**: Extensible base walker interface specifying lifecycle hooks (`observe`, `decide_step`, `update_state`, `emit_messages`) and agent state tracking.
 

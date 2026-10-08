@@ -66,7 +66,8 @@ adaptive-graph-search/
 │   ├── PROBLEM_DEFINITION.md   # Mathematical equations and formal problem contract
 │   ├── GRAPH_GENERATION.md     # Graph family models, invariants, and metadata
 │   ├── DYNAMIC_GRAPH.md        # Edge state transitions, regimes, and active graph views
-│   └── TARGET_AND_UNCERTAINTY.md # Target mobility, sensing radius, and detection noise
+│   ├── TARGET_AND_UNCERTAINTY.md # Target mobility, sensing radius, and detection noise
+│   └── OBSERVATION_AND_PARTIAL_VISIBILITY.md # Firewall, budget B, and local history
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -89,10 +90,11 @@ adaptive-graph-search/
 │       │   ├── types.py        # Enums (EdgeState, TargetMode, DetectionOutcome)
 │       │   ├── models.py       # Data models (Node, Edge, TargetState, WalkerState)
 │       │   ├── state.py        # GroundTruthState unobserved representation
-│       │   ├── observation.py  # Local, noisy Observation model
+│       │   ├── observation.py  # Local, noisy Observation model & history
 │       │   ├── problem.py      # Immutable ProblemDefinition contract
 │       │   ├── target.py       # TargetEngine locomotion across active edges
-│       │   └── detection.py    # DetectionEngine sensor uncertainty model
+│       │   ├── detection.py    # DetectionEngine sensor uncertainty model
+│       │   └── builder.py      # ObservationBuilder partial visibility firewall
 │       ├── walkers/            # Generic walker interfaces and tracking
 │       ├── baselines/          # Benchmark search algorithms
 │       ├── aesw/               # Proposed AESW search algorithm
@@ -109,7 +111,8 @@ adaptive-graph-search/
 │   ├── test_problem_definition.py # Formal contracts, state, and observation tests
 │   ├── test_graph_generators.py   # Graph generators, invariants, and determinism tests
 │   ├── test_dynamic_graph.py   # Markovian edge transitions and dynamic regimes
-│   └── test_target_and_uncertainty.py # Target locomotion and detection noise tests
+│   ├── test_target_and_uncertainty.py # Target locomotion and detection noise tests
+│   └── test_observation.py    # Partial visibility, budget B, and firewall tests
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)
 ```
@@ -199,7 +202,7 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 87 tests verify:
+All 104 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
@@ -208,7 +211,8 @@ All 87 tests verify:
 - Stochastic discrete-time edge transitions, synchronous updates, initialization policies, and dynamic regimes.
 - Ground-truth target locomotion across active edges, trapped target conditions, and mobility probability ($p_{\text{move}}$).
 - Probabilistic target sensing ($s, p_d, p_{\text{fa}}$), dynamic shortest-path hop distances, disconnected target handling, and blind-search conditions ($p_d = p_{\text{fa}}$).
-- Decoupled, isolated PRNG streams for target mobility and sensor noise.
+- Observation firewall (`ObservationBuilder`), neighbor checking budget $B$, binary detection reduction, local history snapshots, and known absent vs unknown status distinction.
+- Decoupled, isolated PRNG streams across graph generation, dynamic churn, target mobility, sensor noise, and observation sampling.
 
 ---
 
@@ -220,3 +224,4 @@ Current implementation includes:
 - **Graph Generation Engine**: Deterministic generators for Erdős–Rényi, Barabási–Albert, Watts–Strogatz, 2D Grid with Obstacles, and Random Geometric Graphs, along with structural statistics and invariant validation.
 - **Dynamic Graph Engine**: Markovian edge ON/OFF transition models ($p_{\text{on}}, p_{\text{off}}$), synchronous updates, dynamic regimes (`STATIC` through `VERY_FAST`), and active graph views ($G_t = (V, E_t)$).
 - **Target & Uncertainty Engine**: Hidden target locomotion ($p_{\text{move}}$) over dynamic active topologies, trapped target handling, radius sensing ($s$), probabilistic sensor noise ($p_d, p_{\text{fa}}$), epistemic boundary enforcement, and isolated random streams.
+- **Observation & Partial Visibility Layer**: Architectural information firewall, `ObservationBuilder`, neighbor checking budget $B$, binary signal reduction, local history snapshots, and absence vs unknown distinction.
