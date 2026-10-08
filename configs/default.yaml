@@ -1,0 +1,20 @@
+# Default Global Simulation Configuration
+# Project: Adaptive Graph Search (AESW)
+
+project:
+  name: "adaptive-graph-search"
+  framework: "Adaptive Evidence-Sharing Walkers (AESW)"
+  version: "0.1.0"
+  description: "Simulation framework for search and transport on dynamic graphs under uncertainty"
+
+reproducibility:
+  seed: 42
+  deterministic: true
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+
+output:
+  results_dir: "results"
+  plots_dir: "plots"

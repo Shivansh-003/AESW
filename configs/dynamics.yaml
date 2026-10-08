@@ -1,0 +1,27 @@
+# Dynamic Graph Transition Configuration
+# Dynamic regimes and Markovian edge transition parameters
+
+dynamics:
+  regime: "MEDIUM"  # Options: STATIC, SLOW, MEDIUM, FAST, VERY_FAST
+  time_horizon: 1000
+  p_on: 0.1
+  p_off: 0.05
+  edge_update_behavior: "markovian"  # Edge transition process
+
+  # Dynamic regime transition rate presets (for future simulation runs)
+  regimes:
+    STATIC:
+      p_on: 0.0
+      p_off: 0.0
+    SLOW:
+      p_on: 0.01
+      p_off: 0.005
+    MEDIUM:
+      p_on: 0.05
+      p_off: 0.025
+    FAST:
+      p_on: 0.1
+      p_off: 0.05
+    VERY_FAST:
+      p_on: 0.2
+      p_off: 0.1

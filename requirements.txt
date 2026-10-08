@@ -1,0 +1,18 @@
+# Core Scientific & Graph Simulation Dependencies
+# PyYAML: Configuration parsing and schema loading
+pyyaml>=6.0.1
+
+# NetworkX: Graph topology and network models
+networkx>=3.2
+
+# NumPy: Numerical computing, vector operations, random number generation
+numpy>=1.26.0
+
+# SciPy: Statistical tests, confidence intervals, distributions
+scipy>=1.12.0
+
+# Matplotlib: Research-grade plotting and visualization
+matplotlib>=3.8.0
+
+# Pytest: Testing framework
+pytest>=8.0.0

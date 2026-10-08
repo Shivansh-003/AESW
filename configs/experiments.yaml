@@ -1,0 +1,29 @@
+# Experiment Suite Configuration
+# Benchmark suite configuration for baseline and adaptive graph search experiments
+
+experiments:
+  name: "baseline_vs_aesw_benchmark"
+  num_runs: 50
+  base_seed: 42
+  output_dir: "results"
+
+  algorithms:
+    - "random_walk"
+    - "non_backtracking"
+    - "k_independent_random_walkers"
+    - "degree_based_walk"
+    - "flooding"
+    - "ant_colony_walk"
+    - "aesw"
+
+  walker:
+    count: 5
+
+  target:
+    mode: "moving"  # Options: static, moving
+    movement_rate: 0.05
+    sensor_noise: 0.1
+    false_alarm_rate: 0.05
+
+  graph_config_ref: "configs/graph.yaml"
+  dynamics_config_ref: "configs/dynamics.yaml"

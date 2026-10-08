@@ -1,0 +1,31 @@
+# Graph Generation & Representation Configuration
+# Supported topologies: er, ba, watts_strogatz, grid, random_geometric, as733
+
+graph:
+  type: "er"  # Options: er, ba, watts_strogatz, grid, random_geometric, as733
+  num_nodes: 100
+  seed: 42
+
+  # Topology-specific parameter templates:
+  er:
+    p: 0.05
+
+  ba:
+    m: 2
+
+  watts_strogatz:
+    k: 4
+    p: 0.1
+
+  grid:
+    rows: 10
+    cols: 10
+    obstacle_ratio: 0.1
+
+  random_geometric:
+    radius: 0.2
+    dim: 2
+
+  as733:
+    dataset_path: "data/as733"
+    snapshot_index: 0
