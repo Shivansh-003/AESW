@@ -36,6 +36,8 @@ from aesw.environment.problem import (
     CostSpecification,
     ProblemDefinition,
 )
+from aesw.environment.target import TargetEngine
+from aesw.environment.detection import DetectionEngine, DetectionResult
 
 __all__ = [
     # Types
@@ -65,4 +67,8 @@ __all__ = [
     "SimulationSpecification",
     "CostSpecification",
     "ProblemDefinition",
+    # Engines & Results
+    "TargetEngine",
+    "DetectionEngine",
+    "DetectionResult",
 ]

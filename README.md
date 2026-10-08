@@ -64,7 +64,9 @@ adaptive-graph-search/
 │
 ├── docs/                       # Detailed technical documentation
 │   ├── PROBLEM_DEFINITION.md   # Mathematical equations and formal problem contract
-│   └── GRAPH_GENERATION.md     # Graph family models, invariants, and metadata
+│   ├── GRAPH_GENERATION.md     # Graph family models, invariants, and metadata
+│   ├── DYNAMIC_GRAPH.md        # Edge state transitions, regimes, and active graph views
+│   └── TARGET_AND_UNCERTAINTY.md # Target mobility, sensing radius, and detection noise
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -78,12 +80,19 @@ adaptive-graph-search/
 │       │   ├── factory.py      # Dispatcher and generator factories
 │       │   └── adapters.py     # Static and temporal graph interfaces
 │       ├── dynamics/           # Dynamic edge transition engine
+│       │   ├── types.py        # EdgeState, DynamicRegime, EdgeInitPolicy enums
+│       │   ├── models.py       # TransitionStatistics and snapshot records
+│       │   ├── engine.py       # DynamicGraphState Markovian transition engine
+│       │   ├── view.py         # ActiveGraphView read-only dynamic presentation
+│       │   └── factory.py      # Dynamic graph instantiation factory
 │       ├── environment/        # Simulation coordinator & observation boundary
 │       │   ├── types.py        # Enums (EdgeState, TargetMode, DetectionOutcome)
 │       │   ├── models.py       # Data models (Node, Edge, TargetState, WalkerState)
 │       │   ├── state.py        # GroundTruthState unobserved representation
 │       │   ├── observation.py  # Local, noisy Observation model
-│       │   └── problem.py      # Immutable ProblemDefinition contract
+│       │   ├── problem.py      # Immutable ProblemDefinition contract
+│       │   ├── target.py       # TargetEngine locomotion across active edges
+│       │   └── detection.py    # DetectionEngine sensor uncertainty model
 │       ├── walkers/            # Generic walker interfaces and tracking
 │       ├── baselines/          # Benchmark search algorithms
 │       ├── aesw/               # Proposed AESW search algorithm
@@ -98,7 +107,9 @@ adaptive-graph-search/
 ├── tests/                      # Automated test suite
 │   ├── test_foundation.py      # Configuration and reproducibility tests
 │   ├── test_problem_definition.py # Formal contracts, state, and observation tests
-│   └── test_graph_generators.py   # Graph generators, invariants, and determinism tests
+│   ├── test_graph_generators.py   # Graph generators, invariants, and determinism tests
+│   ├── test_dynamic_graph.py   # Markovian edge transitions and dynamic regimes
+│   └── test_target_and_uncertainty.py # Target locomotion and detection noise tests
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)
 ```
@@ -188,13 +199,16 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 66 tests verify:
+All 87 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
 - Data models, immutable `ProblemDefinition`, and ground-truth vs. observation boundaries.
 - Topological invariants and parameter validations across all supported graph families.
 - Stochastic discrete-time edge transitions, synchronous updates, initialization policies, and dynamic regimes.
+- Ground-truth target locomotion across active edges, trapped target conditions, and mobility probability ($p_{\text{move}}$).
+- Probabilistic target sensing ($s, p_d, p_{\text{fa}}$), dynamic shortest-path hop distances, disconnected target handling, and blind-search conditions ($p_d = p_{\text{fa}}$).
+- Decoupled, isolated PRNG streams for target mobility and sensor noise.
 
 ---
 
@@ -205,3 +219,4 @@ Current implementation includes:
 - **Formal Problem Contract**: Mathematical definitions, immutable `ProblemDefinition`, data models, and observation boundaries.
 - **Graph Generation Engine**: Deterministic generators for Erdős–Rényi, Barabási–Albert, Watts–Strogatz, 2D Grid with Obstacles, and Random Geometric Graphs, along with structural statistics and invariant validation.
 - **Dynamic Graph Engine**: Markovian edge ON/OFF transition models ($p_{\text{on}}, p_{\text{off}}$), synchronous updates, dynamic regimes (`STATIC` through `VERY_FAST`), and active graph views ($G_t = (V, E_t)$).
+- **Target & Uncertainty Engine**: Hidden target locomotion ($p_{\text{move}}$) over dynamic active topologies, trapped target handling, radius sensing ($s$), probabilistic sensor noise ($p_d, p_{\text{fa}}$), epistemic boundary enforcement, and isolated random streams.

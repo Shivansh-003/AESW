@@ -8,7 +8,7 @@ Acts as the immutable computational contract for search algorithms and simulatio
 """
 
 from dataclasses import dataclass, field, asdict
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 from aesw.environment.types import TargetMode, DynamicRegime
 from aesw.environment.models import DelaySpecification
 
@@ -50,6 +50,7 @@ class TargetSpecification:
     """Formal parameters defining target locality and locomotion."""
     mode: TargetMode = TargetMode.MOVING
     p_move: float = 0.05
+    initial_node: Optional[int | str] = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.mode, TargetMode):
@@ -213,6 +214,7 @@ class ProblemDefinition:
         target_spec = TargetSpecification(
             mode=TargetMode(mode_str),
             p_move=float(t_data.get("movement_rate", 0.05)),
+            initial_node=t_data.get("initial_node", None),
         )
 
         # 4. Detection spec

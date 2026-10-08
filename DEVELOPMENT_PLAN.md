@@ -54,8 +54,16 @@ This document outlines the research implementation roadmap for the decentralized
 ---
 
 ## 5. Target Locomotion & Uncertainty Modeling
-- **Status**: *Planned*
-- **Scope**: Target movement dynamics along active edges with transition probability $p_{\text{move}}$, and sensor observation generation subject to signal radius $s$, detection probability $p_d$, and false alarm probability $p_{\text{fa}}$.
+- **Status**: **Completed**
+- **Scope**:
+  - Ground-truth target model ($x_t \in V$) tracking discrete time progression, transition histories, and movement attempts/successes.
+  - Target locomotion engine ([`TargetEngine`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/environment/target.py)) evaluating active graph topology $G_t = (V, E_t)$ after dynamic edge churn.
+  - Stochastic movement attempts with probability $p_{\text{move}}$, uniform selection among active neighbors, and stationary trapping when isolated or when all incident edges are OFF.
+  - Sensor uncertainty engine ([`DetectionEngine`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/environment/detection.py)) with BFS shortest path hop distance in $G_t$ ($\text{dist}_{G_t}(u, x_t) \le s$), infinite distance handling for disconnected targets, detection probability $p_d$, and false alarm probability $p_{\text{fa}}$.
+  - Complete four-category detection classification (`POSITIVE`, `MISSED`, `FALSE_POSITIVE`, `NEGATIVE`) and blind-search verification ($p_d = p_{\text{fa}}$).
+  - Strict epistemic boundary enforcement preventing leakage of ground-truth target coordinates or internal distance to observer agents.
+  - Decoupled, isolated PRNG streams for target mobility and sensor noise.
+  - 21 automated unit and statistical tests (87 total passing suite).
 
 ---
 

@@ -5,7 +5,7 @@ Defines immutable representations of nodes, edges, delay specifications, targets
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping
+from typing import Any, Mapping, Optional
 from aesw.environment.types import EdgeState, TargetMode
 
 
@@ -88,22 +88,34 @@ class DelaySpecification:
 
 @dataclass(frozen=True)
 class TargetState:
-    """Formal state representation of the target x_t ∈ V.
+    """Formal ground-truth state representation of the target x_t ∈ V.
+
+    INVARIANT: This ground-truth object must NEVER be directly exposed to walkers.
 
     Attributes:
-        current_node: Current node occupied by the target x_t.
+        current_node: Current vertex occupied by the target x_t.
         mode: Locomotion mode (STATIC or MOVING).
-        p_move: Transition probability of moving to an adjacent node at time step t.
+        p_move: Transition probability of moving to an adjacent active node at time t.
+        previous_node: Vertex occupied at step t-1 (None if at t=0).
+        time: Current simulation timestamp t.
+        move_attempted: Whether a movement was attempted at the most recent step.
+        move_succeeded: Whether the movement attempt succeeded.
     """
     current_node: int | str
     mode: TargetMode = TargetMode.STATIC
     p_move: float = 0.0
+    previous_node: Optional[int | str] = None
+    time: int = 0
+    move_attempted: bool = False
+    move_succeeded: bool = False
 
     def __post_init__(self) -> None:
         if self.current_node is None:
             raise ValueError("Target current_node must not be None")
         if not (0.0 <= self.p_move <= 1.0):
             raise ValueError(f"p_move must be in [0, 1], got {self.p_move}")
+        if self.time < 0:
+            raise ValueError(f"time must be non-negative, got {self.time}")
 
 
 @dataclass(frozen=True)

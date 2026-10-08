@@ -26,7 +26,8 @@ In distributed autonomous systems, peer-to-peer computing, wireless sensor netwo
 | **State Representation & Observation Boundary**| **Implemented** | `GroundTruthState`, `Observation`, `ObservedEdgeInfo`, `TargetSignalObservation` |
 | **Graph Generation Engine** | **Implemented** | Deterministic generators for ER, BA, WS, 2D Grid with obstacles, RGG; `GraphInstance` abstraction; topology statistics |
 | **Dynamic Graph Engine** | **Implemented** | Stochastic Markovian edge transitions ($p_{\text{on}}, p_{\text{off}}$), synchronous updates, dynamic regimes, `DynamicGraphState`, `ActiveGraphView` |
-| **Automated Foundation & Topology Tests** | **Implemented** | 66 unit tests covering foundations, problem contracts, graph generators, and dynamic transitions |
+| **Target & Uncertainty Engine** | **Implemented** | Hidden target locomotion ($p_{\text{move}}$), active edge constraint, trapped target handling, radius sensing ($s$), detection noise ($p_d, p_{\text{fa}}$), blind search boundary, isolated RNG |
+| **Automated Verification Suite** | **Implemented** | 87 unit and statistical tests covering foundation, problem contracts, graph generators, dynamic transitions, target mobility, and sensing uncertainty |
 | **Simulation Environment Coordinator** | *Planned* | Discrete-time orchestration, hidden vs. observable state separation |
 | **Walker Abstractions** | *Planned* | Common walker interfaces and message handling |
 | **Baseline Search Algorithms** | *Planned* | RW, NBW, k-RW, Degree-Based, Flooding, Ant Colony Walk |
