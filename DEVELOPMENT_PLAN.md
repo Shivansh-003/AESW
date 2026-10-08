@@ -42,8 +42,14 @@ This document outlines the research implementation roadmap for the decentralized
 ---
 
 ## 4. Dynamic Edge Transition Engine
-- **Status**: *Planned*
-- **Scope**: Stochastic discrete-time edge transition engine implementing Markovian $p_{\text{on}}$ and $p_{\text{off}}$ dynamics across defined churn regimes (`STATIC`, `SLOW`, `MEDIUM`, `FAST`, `VERY_FAST`).
+- **Status**: **Completed**
+- **Scope**:
+  - Stochastic discrete-time Markovian edge transition model ($p_{\text{on}}, p_{\text{off}}$) over immutable static topologies $G = (V, E)$.
+  - Synchronous, order-independent state update engine ([`DynamicGraphState`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/dynamics/engine.py)).
+  - Edge initialization policies (`ALL_ON`, `ALL_OFF`, `STATIONARY`).
+  - Named churn regimes (`STATIC`, `SLOW`, `MEDIUM`, `FAST`, `VERY_FAST`) with configurable parameter presets.
+  - Read-only active topology presentation ([`ActiveGraphView`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/dynamics/view.py)) and step transition tracking ([`TransitionStatistics`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/dynamics/models.py)).
+  - 19 new automated tests (66 total passing).
 
 ---
 

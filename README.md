@@ -188,12 +188,13 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 47 tests verify:
+All 66 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
 - Data models, immutable `ProblemDefinition`, and ground-truth vs. observation boundaries.
 - Topological invariants and parameter validations across all supported graph families.
+- Stochastic discrete-time edge transitions, synchronous updates, initialization policies, and dynamic regimes.
 
 ---
 
@@ -203,3 +204,4 @@ Current implementation includes:
 - **Reproducible Foundation**: Configuration loader, isolated RNG utilities, and package structure.
 - **Formal Problem Contract**: Mathematical definitions, immutable `ProblemDefinition`, data models, and observation boundaries.
 - **Graph Generation Engine**: Deterministic generators for Erdős–Rényi, Barabási–Albert, Watts–Strogatz, 2D Grid with Obstacles, and Random Geometric Graphs, along with structural statistics and invariant validation.
+- **Dynamic Graph Engine**: Markovian edge ON/OFF transition models ($p_{\text{on}}, p_{\text{off}}$), synchronous updates, dynamic regimes (`STATIC` through `VERY_FAST`), and active graph views ($G_t = (V, E_t)$).
