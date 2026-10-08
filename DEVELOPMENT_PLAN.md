@@ -81,27 +81,27 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 7. Simulation Environment Coordinator
-- **Status**: *Planned*
-- **Scope**: Central discrete-time simulation coordinator orchestrating dynamic edge transitions, target movements, traversal delays, and multi-walker step scheduling.
+## 7. Baseline Search Algorithms
+- **Status**: **Completed**
+- **Scope**:
+  - Unified search policy interface ([`BaselinePolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/base.py)) operating strictly on partial-visibility `Observation` snapshots.
+  - Action representation ([`SearchAction`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/actions.py)) and observation-bounded validation (`validate_action`).
+  - Six benchmark policies:
+    - Random Walk ([`RandomWalkPolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/random_walk.py))
+    - Non-Backtracking Walk ([`NonBacktrackingWalkPolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/non_backtracking.py))
+    - $k$ Independent Random Walkers ([`IndependentRandomWalkers`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/independent_walkers.py))
+    - Degree-Based Walk ([`DegreeBasedWalkPolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/degree_based.py)) using locally observed degrees
+    - Flooding / Frontier Search ([`FloodingPolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/flooding.py)) with local discovery frontier
+    - Ant Colony Walk ([`AntColonyWalkPolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/ant_colony.py)) with private pheromone evaporation and reinforcement
+  - Baseline factory dispatcher ([`create_baseline`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/factory.py)) and metadata provenance.
+  - Decoupled, isolated PRNG streams and policy reset reproducibility.
+  - 46 automated tests (150 total passing suite).
 
 ---
 
-## 8. Generic Walker Abstractions & Interfaces
+## 8. Simulation Environment Coordinator & Walker Orchestration
 - **Status**: *Planned*
-- **Scope**: Extensible base walker interface specifying lifecycle hooks (`observe`, `decide_step`, `update_state`, `emit_messages`) and agent state tracking.
-
----
-
-## 8. Baseline Search Algorithms
-- **Status**: *Planned*
-- **Scope**: Benchmark search algorithms evaluated under identical environment conditions:
-  - Random Walk (RW)
-  - Non-Backtracking Walk (NBW)
-  - $k$ Independent Random Walkers ($k$-RW)
-  - Degree-Based Walk
-  - Flooding / Parallel Breadth-First Search
-  - Ant Colony Walk
+- **Scope**: Central discrete-time simulation coordinator orchestrating dynamic edge transitions, target movements, traversal delays, multi-walker step scheduling, and action execution.
 
 ---
 

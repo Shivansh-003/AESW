@@ -28,3 +28,26 @@ experiments:
 
   graph_config_ref: "configs/graph.yaml"
   dynamics_config_ref: "configs/dynamics.yaml"
+
+  baselines:
+    random_walk:
+      enabled: true
+    non_backtracking:
+      enabled: true
+    independent_random_walkers:
+      enabled: true
+      walker_counts: [1, 2, 4, 8]
+    degree_based:
+      enabled: true
+      epsilon: 0.001
+      default_prior_degree: 1.0
+    flooding:
+      enabled: true
+    ant_colony:
+      enabled: true
+      evaporation_rate: 0.05
+      reinforcement: 1.0
+      signal_reinforcement: 0.0
+      alpha: 1.0
+      initial_pheromone: 1.0
+      min_pheromone: 0.0001

@@ -28,10 +28,10 @@ In distributed autonomous systems, peer-to-peer computing, wireless sensor netwo
 | **Dynamic Graph Engine** | **Implemented** | Stochastic Markovian edge transitions ($p_{\text{on}}, p_{\text{off}}$), synchronous updates, dynamic regimes, `DynamicGraphState`, `ActiveGraphView` |
 | **Target & Uncertainty Engine** | **Implemented** | Hidden target locomotion ($p_{\text{move}}$), active edge constraint, trapped target handling, radius sensing ($s$), detection noise ($p_d, p_{\text{fa}}$), blind search boundary, isolated RNG |
 | **Observation & Partial Visibility Layer** | **Implemented** | Information firewall, `ObservationBuilder`, neighbor checking budget $B$, binary detection reduction, local history snapshots, known absent vs unknown distinction |
-| **Automated Verification Suite** | **Implemented** | 104 unit and statistical tests covering foundation, problem contracts, graph generators, dynamic transitions, target mobility, sensing uncertainty, and observation firewall |
+| **Baseline Search Algorithms** | **Implemented** | Six benchmark policies (RW, NBW, k-RW, Degree-Based, Flooding, Ant Colony) operating strictly on local `Observation` snapshots |
+| **Automated Verification Suite** | **Implemented** | 150 unit and statistical tests covering foundation, problem contracts, graph generators, dynamic transitions, target mobility, sensing uncertainty, observation firewall, and baselines |
 | **Simulation Environment Coordinator** | *Planned* | Discrete-time orchestration, hidden vs. observable state separation |
 | **Walker Abstractions** | *Planned* | Common walker interfaces and message handling |
-| **Baseline Search Algorithms** | *Planned* | RW, NBW, k-RW, Degree-Based, Flooding, Ant Colony Walk |
 | **AESW Search Algorithm** | *Planned* | Core AESW algorithm, mode selector, softmax decision mechanism |
 | **Evidence Memory & Caching** | *Planned* | Node cache, positive/negative evidence, churn-driven decay |
 | **Evaluation Suite & Metrics** | *Planned* | Search time, success rate, messages, movement/communication cost |

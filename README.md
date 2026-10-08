@@ -67,7 +67,8 @@ adaptive-graph-search/
 │   ├── GRAPH_GENERATION.md     # Graph family models, invariants, and metadata
 │   ├── DYNAMIC_GRAPH.md        # Edge state transitions, regimes, and active graph views
 │   ├── TARGET_AND_UNCERTAINTY.md # Target mobility, sensing radius, and detection noise
-│   └── OBSERVATION_AND_PARTIAL_VISIBILITY.md # Firewall, budget B, and local history
+│   ├── OBSERVATION_AND_PARTIAL_VISIBILITY.md # Firewall, budget B, and local history
+│   └── BASELINE_ALGORITHMS.md  # Benchmark search policies, fairness, and action model
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -97,6 +98,16 @@ adaptive-graph-search/
 │       │   └── builder.py      # ObservationBuilder partial visibility firewall
 │       ├── walkers/            # Generic walker interfaces and tracking
 │       ├── baselines/          # Benchmark search algorithms
+│       │   ├── types.py        # BaselineType and ActionType enums
+│       │   ├── actions.py      # SearchAction and observation validation
+│       │   ├── base.py         # BaselinePolicy abstract base and metadata
+│       │   ├── random_walk.py  # Unbiased RandomWalkPolicy
+│       │   ├── non_backtracking.py # 1-step memory NonBacktrackingWalkPolicy
+│       │   ├── independent_walkers.py # k IndependentRandomWalkers
+│       │   ├── degree_based.py # Locally observed DegreeBasedWalkPolicy
+│       │   ├── flooding.py     # Local frontier FloodingPolicy
+│       │   ├── ant_colony.py   # Private pheromone AntColonyWalkPolicy
+│       │   └── factory.py      # Baseline factory dispatcher
 │       ├── aesw/               # Proposed AESW search algorithm
 │       ├── memory/             # Evidence caching and decay mechanisms
 │       ├── evaluation/         # Performance metrics & statistical testing
@@ -112,7 +123,8 @@ adaptive-graph-search/
 │   ├── test_graph_generators.py   # Graph generators, invariants, and determinism tests
 │   ├── test_dynamic_graph.py   # Markovian edge transitions and dynamic regimes
 │   ├── test_target_and_uncertainty.py # Target locomotion and detection noise tests
-│   └── test_observation.py    # Partial visibility, budget B, and firewall tests
+│   ├── test_observation.py     # Partial visibility, budget B, and firewall tests
+│   └── test_baselines.py       # Benchmark search policy tests and action validation
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)
 ```
@@ -202,7 +214,7 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 104 tests verify:
+All 150 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
@@ -212,7 +224,9 @@ All 104 tests verify:
 - Ground-truth target locomotion across active edges, trapped target conditions, and mobility probability ($p_{\text{move}}$).
 - Probabilistic target sensing ($s, p_d, p_{\text{fa}}$), dynamic shortest-path hop distances, disconnected target handling, and blind-search conditions ($p_d = p_{\text{fa}}$).
 - Observation firewall (`ObservationBuilder`), neighbor checking budget $B$, binary detection reduction, local history snapshots, and known absent vs unknown status distinction.
-- Decoupled, isolated PRNG streams across graph generation, dynamic churn, target mobility, sensor noise, and observation sampling.
+- Six benchmark search policies (Random Walk, Non-Backtracking, $k$ Independent Walkers, Degree-Based, Flooding, Ant Colony) operating strictly over partial observations.
+- Action validation preventing movement to unobserved nodes or across inactive links.
+- Decoupled, isolated PRNG streams across graph generation, dynamic churn, target mobility, sensor noise, observation sampling, and policy decisions.
 
 ---
 
@@ -225,3 +239,4 @@ Current implementation includes:
 - **Dynamic Graph Engine**: Markovian edge ON/OFF transition models ($p_{\text{on}}, p_{\text{off}}$), synchronous updates, dynamic regimes (`STATIC` through `VERY_FAST`), and active graph views ($G_t = (V, E_t)$).
 - **Target & Uncertainty Engine**: Hidden target locomotion ($p_{\text{move}}$) over dynamic active topologies, trapped target handling, radius sensing ($s$), probabilistic sensor noise ($p_d, p_{\text{fa}}$), epistemic boundary enforcement, and isolated random streams.
 - **Observation & Partial Visibility Layer**: Architectural information firewall, `ObservationBuilder`, neighbor checking budget $B$, binary signal reduction, local history snapshots, and absence vs unknown distinction.
+- **Baseline Search Algorithms**: Six standardized search policies (Random Walk, Non-Backtracking, $k$-RW, Degree-Based, Flooding, Ant Colony) with observation-bounded action validation and isolated PRNG streams.
