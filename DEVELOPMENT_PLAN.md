@@ -99,9 +99,16 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 8. Simulation Environment Coordinator & Walker Orchestration
-- **Status**: *Planned*
-- **Scope**: Central discrete-time simulation coordinator orchestrating dynamic edge transitions, target movements, traversal delays, multi-walker step scheduling, and action execution.
+## 8. Experimental Harness & Simulation Coordinator
+- **Status**: **Completed**
+- **Scope**:
+  - Central discrete-time simulation coordinator ([`SimulationCoordinator`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/environment/coordinator.py)) orchestrating dynamic edge transitions, target movements, traversal delays, multi-walker actions, and termination conditions (`SUCCESS`, `BUDGET_EXHAUSTED`, `DISCONNECTED`).
+  - Separation of experiment generation ([`generate_experiment`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/experiment.py)) and algorithm execution ([`run_experiment`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/experiment.py)).
+  - Immutable experiment realization snapshot ([`ExperimentInstance`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/experiment.py)) guaranteeing fair multi-algorithm comparison on identical topologies, placements, and dynamic transitions.
+  - Deterministic PRNG seed sequence derivation tree via NumPy `SeedSequence`.
+  - Automated benchmark suite runner ([`run_benchmark`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/experiment.py)) with cross-seed aggregation ([`compute_aggregated_metrics`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/metrics.py)) and 95% Student's t confidence intervals.
+  - Structured JSON artifact serialization ([`ExperimentResult`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/experiment.py), [`BenchmarkResult`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/experiment.py)).
+  - 21 automated unit and integration tests (171 total passing suite).
 
 ---
 
@@ -114,18 +121,17 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 10. Evidence Memory & Information Sharing
-- **Status**: *Planned*
-- **Scope**: Evidence cache structures:
-  - Dual positive/negative evidence records
-  - Node-resident and walker-local cache buffers
-  - Adaptive memory decay driven by estimated graph churn
+## 10. Evidence Memory & Adaptive Exponential Decay
+- **Status**: **Completed**
+- **Scope**:
+  - Structured evidence representations ([`NodeEvidence`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/models.py), [`WeightedEvidence`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/models.py)).
+  - Central adaptive memory decay formulation $w = \exp(-\hat{\lambda} \cdot \text{age})$ ([`exponential_decay`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/decay.py)).
+  - Characteristic half-life calculations ($t_{1/2} = \frac{\ln(2)}{\hat{\lambda}}$) and effective confidence scaling.
+  - Dual positive/negative evidence polarities (`POSITIVE` vs `NEGATIVE`).
+  - Local node-level memory cache container ([`EvidenceCache`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/cache.py)) with deterministic update rules, observation ingestion, and stale entry pruning.
+  - 18 automated unit and integration tests (189 total passing suite).
 
----
 
-## 11. Evaluation Metrics & Benchmark Harness
-- **Status**: *Planned*
-- **Scope**: Automated benchmark orchestrator computing search time, success rate, unique nodes visited, node revisits, message volume, movement cost, communication cost, and total cost.
 
 ---
 

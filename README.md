@@ -68,7 +68,9 @@ adaptive-graph-search/
 │   ├── DYNAMIC_GRAPH.md        # Edge state transitions, regimes, and active graph views
 │   ├── TARGET_AND_UNCERTAINTY.md # Target mobility, sensing radius, and detection noise
 │   ├── OBSERVATION_AND_PARTIAL_VISIBILITY.md # Firewall, budget B, and local history
-│   └── BASELINE_ALGORITHMS.md  # Benchmark search policies, fairness, and action model
+│   ├── BASELINE_ALGORITHMS.md  # Benchmark search policies, fairness, and action model
+│   ├── EXPERIMENTAL_HARNESS.md # Experiment engine, generation vs execution, and artifacts
+│   └── EVIDENCE_MEMORY.md      # Adaptive exponential decay and local evidence cache
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -95,7 +97,8 @@ adaptive-graph-search/
 │       │   ├── problem.py      # Immutable ProblemDefinition contract
 │       │   ├── target.py       # TargetEngine locomotion across active edges
 │       │   ├── detection.py    # DetectionEngine sensor uncertainty model
-│       │   └── builder.py      # ObservationBuilder partial visibility firewall
+│       │   ├── builder.py      # ObservationBuilder partial visibility firewall
+│       │   └── coordinator.py  # SimulationCoordinator discrete-time orchestrator
 │       ├── walkers/            # Generic walker interfaces and tracking
 │       ├── baselines/          # Benchmark search algorithms
 │       │   ├── types.py        # BaselineType and ActionType enums
@@ -110,7 +113,13 @@ adaptive-graph-search/
 │       │   └── factory.py      # Baseline factory dispatcher
 │       ├── aesw/               # Proposed AESW search algorithm
 │       ├── memory/             # Evidence caching and decay mechanisms
-│       ├── evaluation/         # Performance metrics & statistical testing
+│       │   ├── types.py        # EvidencePolarity and EvidenceSource enums
+│       │   ├── models.py       # NodeEvidence and WeightedEvidence dataclasses
+│       │   ├── decay.py        # Adaptive exponential decay and half-life formulations
+│       │   └── cache.py        # Local EvidenceCache container and update rules
+│       ├── evaluation/         # Performance metrics, harness & benchmark runner
+│       │   ├── metrics.py      # RunMetrics, AggregatedMetrics, and CI computation
+│       │   └── experiment.py   # ExperimentInstance, run_experiment, run_benchmark
 │       └── utils/              # Configuration loaders and isolated RNG helpers
 │           ├── config.py
 │           └── reproducibility.py
@@ -124,9 +133,13 @@ adaptive-graph-search/
 │   ├── test_dynamic_graph.py   # Markovian edge transitions and dynamic regimes
 │   ├── test_target_and_uncertainty.py # Target locomotion and detection noise tests
 │   ├── test_observation.py     # Partial visibility, budget B, and firewall tests
-│   └── test_baselines.py       # Benchmark search policy tests and action validation
+│   ├── test_baselines.py       # Benchmark search policy tests and action validation
+│   ├── test_experiment_engine.py # Experimental harness, coordination, and benchmark tests
+│   └── test_evidence_memory.py # Node evidence, exponential decay, and cache tests
+
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)
+
 ```
 
 ---
@@ -214,7 +227,7 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 150 tests verify:
+All 189 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
@@ -227,6 +240,10 @@ All 150 tests verify:
 - Six benchmark search policies (Random Walk, Non-Backtracking, $k$ Independent Walkers, Degree-Based, Flooding, Ant Colony) operating strictly over partial observations.
 - Action validation preventing movement to unobserved nodes or across inactive links.
 - Decoupled, isolated PRNG streams across graph generation, dynamic churn, target mobility, sensor noise, observation sampling, and policy decisions.
+- Discrete-time simulation coordination (`SimulationCoordinator`), move tracking, visit/revisit counters, and termination detection (`SUCCESS`, `BUDGET_EXHAUSTED`, `DISCONNECTED`).
+- Experimental harness (`generate_experiment`, `run_experiment`, `run_benchmark`) guaranteeing fair evaluation of multiple algorithms on identical environment realizations.
+- Statistical metrics aggregation (`compute_aggregated_metrics`) with 95% Student's t confidence intervals and structured JSON artifact persistence.
+- AESW evidence memory models (`NodeEvidence`, `WeightedEvidence`), adaptive exponential decay ($w = \exp(-\hat{\lambda} \cdot \text{age})$), characteristic half-life, dual positive/negative evidence polarities, local cache management (`EvidenceCache`), update rules, and observation ingestion.
 
 ---
 
@@ -240,3 +257,7 @@ Current implementation includes:
 - **Target & Uncertainty Engine**: Hidden target locomotion ($p_{\text{move}}$) over dynamic active topologies, trapped target handling, radius sensing ($s$), probabilistic sensor noise ($p_d, p_{\text{fa}}$), epistemic boundary enforcement, and isolated random streams.
 - **Observation & Partial Visibility Layer**: Architectural information firewall, `ObservationBuilder`, neighbor checking budget $B$, binary signal reduction, local history snapshots, and absence vs unknown distinction.
 - **Baseline Search Algorithms**: Six standardized search policies (Random Walk, Non-Backtracking, $k$-RW, Degree-Based, Flooding, Ant Colony) with observation-bounded action validation and isolated PRNG streams.
+- **Experimental Harness & Simulation Coordinator**: Discrete-time simulation coordinator, immutable `ExperimentInstance` generation, exact fair comparison across all baselines, cross-seed benchmark automation, and structured JSON artifact generation.
+- **AESW Evidence Memory & Adaptive Exponential Decay**: Structured evidence representation, exponential decay weighting ($w = \exp(-\hat{\lambda} \cdot \text{age})$), half-life formulations, positive and negative evidence polarities, local node-level memory cache (`EvidenceCache`), timestamp-prioritized update rules, and observation ingestion.
+
+

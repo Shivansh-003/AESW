@@ -1,14 +1,25 @@
 """
 Memory Module
 =============
-Evidence representation, node caching, and decay mechanisms.
-
-Planned Functionality:
-- EvidenceEntry data structure (signal strength, polarity, timestamp, walker_id, confidence)
-- Positive evidence: target presence detection / sensor readings
-- Negative evidence: absence confirmations / cleared subgraphs
-- Node cache mechanisms: walker-local caches and node-resident caches
-- Adaptive decay formulations based on elapsed time and estimated graph churn
+Evidence representation, node caching, and adaptive exponential decay mechanisms for AESW.
 """
 
-__all__: list[str] = []
+from aesw.memory.types import EvidencePolarity, EvidenceSource
+from aesw.memory.decay import (
+    exponential_decay,
+    compute_half_life,
+    decay_rate_from_half_life,
+)
+from aesw.memory.models import NodeEvidence, WeightedEvidence
+from aesw.memory.cache import EvidenceCache
+
+__all__ = [
+    "EvidencePolarity",
+    "EvidenceSource",
+    "exponential_decay",
+    "compute_half_life",
+    "decay_rate_from_half_life",
+    "NodeEvidence",
+    "WeightedEvidence",
+    "EvidenceCache",
+]

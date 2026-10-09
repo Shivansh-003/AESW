@@ -40,6 +40,7 @@ from aesw.environment.problem import (
 from aesw.environment.target import TargetEngine
 from aesw.environment.detection import DetectionEngine, DetectionResult
 from aesw.environment.builder import ObservationBuilder
+from aesw.environment.coordinator import SimulationCoordinator
 
 __all__ = [
     # Types
@@ -75,4 +76,7 @@ __all__ = [
     "DetectionEngine",
     "DetectionResult",
     "ObservationBuilder",
+    # Coordinator
+    "SimulationCoordinator",
 ]
+

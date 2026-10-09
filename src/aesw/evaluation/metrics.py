@@ -85,3 +85,62 @@ class AggregatedMetrics:
             raise ValueError(f"num_runs must be strictly positive, got {self.num_runs}")
         if not (0.0 <= self.success_rate <= 1.0):
             raise ValueError(f"success_rate must be in [0.0, 1.0], got {self.success_rate}")
+
+
+def compute_aggregated_metrics(
+    runs: list[RunMetrics] | tuple[RunMetrics, ...],
+    algorithm: str | None = None,
+) -> AggregatedMetrics:
+    """Compute aggregated summary statistics and 95% confidence intervals across stochastic runs.
+
+    Args:
+        runs: Non-empty sequence of RunMetrics instances.
+        algorithm: Optional explicit algorithm name override. If None, inferred from first run.
+
+    Returns:
+        AggregatedMetrics instance summarizing empirical performance.
+
+    Raises:
+        ValueError: If runs sequence is empty.
+    """
+    if not runs:
+        raise ValueError("Cannot aggregate empty sequence of RunMetrics")
+
+    import numpy as np
+    import scipy.stats
+
+    algo_name = algorithm or runs[0].algorithm
+    n = len(runs)
+    successes = sum(1 for r in runs if r.success)
+    success_rate = float(successes / n)
+
+    search_times = [r.search_time for r in runs]
+    costs = [r.total_cost for r in runs]
+
+    mean_search_time = float(np.mean(search_times))
+    std_search_time = float(np.std(search_times, ddof=1)) if n > 1 else 0.0
+
+    mean_cost = float(np.mean(costs))
+    std_cost = float(np.std(costs, ddof=1)) if n > 1 else 0.0
+
+    if n > 1 and std_cost > 0.0:
+        t_crit = float(scipy.stats.t.ppf(0.975, df=n - 1))
+        margin = float(t_crit * (std_cost / np.sqrt(n)))
+        ci_lower = max(0.0, mean_cost - margin)
+        ci_upper = mean_cost + margin
+    else:
+        ci_lower = mean_cost
+        ci_upper = mean_cost
+
+    return AggregatedMetrics(
+        algorithm=algo_name,
+        num_runs=n,
+        success_rate=success_rate,
+        mean_search_time=mean_search_time,
+        std_search_time=std_search_time,
+        mean_total_cost=mean_cost,
+        std_total_cost=std_cost,
+        ci_lower_cost=ci_lower,
+        ci_upper_cost=ci_upper,
+    )
+
