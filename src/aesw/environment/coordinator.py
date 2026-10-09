@@ -57,6 +57,7 @@ class SimulationCoordinator:
         seed_target: Optional[int] = None,
         seed_detection: Optional[int] = None,
         seed_observation: Optional[int] = None,
+        seed_jump: Optional[int] = None,
     ) -> None:
         """Initialize the simulation environment coordinator.
 
@@ -69,11 +70,13 @@ class SimulationCoordinator:
             seed_target: Seed for target locomotion.
             seed_detection: Seed for detection noise.
             seed_observation: Seed for observation candidate sampling.
+            seed_jump: Seed for environment-mediated long jumps.
         """
         self._problem_def = problem_def
         self._static_graph = static_graph
         self._time = 0
         self._time_horizon = problem_def.simulation.time_horizon
+        self._jump_rng = np.random.default_rng(seed_jump if seed_jump is not None else 9999)
 
         # Initialize dynamic edge transition engine
         self._dynamic_graph: DynamicGraphState = create_dynamic_graph_from_spec(
@@ -183,6 +186,16 @@ class SimulationCoordinator:
     def total_messages(self) -> int:
         """Total messages Q exchanged across all walkers."""
         return self._total_messages
+
+    def record_messages(self, count: int) -> None:
+        """Record communication message overhead Q incurred by search policies.
+
+        Args:
+            count: Number of messages to add to cumulative Q.
+        """
+        if count < 0:
+            raise ValueError(f"Message count must be non-negative, got {count}")
+        self._total_messages += int(count)
 
     @property
     def walker_trajectories(self) -> Mapping[int, tuple[int | str, ...]]:
@@ -329,6 +342,38 @@ class SimulationCoordinator:
             elif action.action_type == ActionType.STAY:
                 # Walker remains stationary
                 pass
+
+            elif action.action_type == ActionType.JUMP:
+                # Environment-mediated long jump
+                nodes = sorted(list(self._static_graph.nodes.keys()), key=str)
+                if len(nodes) > 1 and w_state.current_node in nodes:
+                    other_nodes = [n for n in nodes if n != w_state.current_node]
+                    dest = other_nodes[int(self._jump_rng.integers(0, len(other_nodes)))]
+                else:
+                    dest = nodes[int(self._jump_rng.integers(0, len(nodes)))]
+
+                delay = int(self._problem_def.delay.min_delay)
+                self._total_moves += 1
+                new_step_count = w_state.step_count + 1
+
+                if dest in self._visited_nodes:
+                    self._revisit_count += 1
+                else:
+                    self._visited_nodes.add(dest)
+
+                self._walker_states[w_id] = WalkerState(
+                    walker_id=w_id,
+                    current_node=dest,
+                    step_count=new_step_count,
+                    message_count=w_state.message_count,
+                    busy_until_time=self._time + delay,
+                )
+                self._trajectories[w_id].append(dest)
+
+                # Check immediate acquisition at destination
+                if dest == self._target_engine.current_node:
+                    self._termination_status = SearchTerminationStatus.SUCCESS
+
 
         if self._termination_status == SearchTerminationStatus.SUCCESS:
             return self.get_observations(), True, SearchTerminationStatus.SUCCESS

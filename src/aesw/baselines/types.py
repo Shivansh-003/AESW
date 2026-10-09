@@ -15,6 +15,7 @@ class BaselineType(str, Enum):
     DEGREE_BASED = "degree_based"
     FLOODING = "flooding"
     ANT_COLONY = "ant_colony"
+    AESW = "aesw"
 
 
 class ActionType(str, Enum):
@@ -22,3 +23,5 @@ class ActionType(str, Enum):
     MOVE = "move"
     STAY = "stay"
     CHECK = "check"
+    JUMP = "jump"
+

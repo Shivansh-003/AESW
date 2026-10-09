@@ -9,7 +9,7 @@ Mathematical Formulation:
         S(u) = a * P(u) + b * N(u) - g * R(u) - d * D(u)
 
     where:
-        P(u) = Positive evidence strength in [0.0, 1.0] (from M8 EvidenceCache with M9 churn decay)
+        P(u) = Positive evidence strength in [0.0, 1.0] (from EvidenceCache with dynamic churn decay)
         N(u) = Local novelty / new-information value in (0.0, 1.0] (1 / (1 + visit_count))
         R(u) = Local revisit penalty >= 0.0 (visit_count)
         D(u) = Locally observable traversal delay / movement cost >= 1.0
@@ -526,11 +526,11 @@ class NextHopDecisionEngine:
             observation: Local Observation snapshot from which candidates and current node are extracted.
             evidence_cache: Walker's private local EvidenceCache.
             current_time: Current discrete simulation timestamp t.
-            mode: SearchMode from M11 ModeController (LOCAL or LONG_JUMP).
+            mode: SearchMode from AdaptiveModeController (LOCAL or LONG_JUMP).
             candidates: Optional explicit candidate pool override. If omitted, extracted from observation.
             visit_counts: Local mapping from vertex ID to visit count.
             traversal_delays: Optional mapping of local edge traversal durations.
-            lambda_hat: Current churn estimate from M9 ChurnEstimator for evidence decay.
+            lambda_hat: Current churn estimate from ChurnEstimator for evidence decay.
             rng: Optional isolated NumPy random Generator.
 
         Returns:

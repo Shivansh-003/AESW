@@ -191,4 +191,4 @@ Given path graph $A - B - C - D - E$ with walker at $B$ at time $t$:
 The following components are intentionally excluded from this layer:
 - **Search Intelligence**: No walker movement decision logic, heuristic scoring, or random walk navigation.
 - **AESW Memory Caching**: No global churn estimation $\hat{C}$, evidence half-life decay, or node cache sharing.
-- **Simulation Coordinator**: Multi-walker step orchestration and benchmark execution loops belong to subsequent milestones.
+- **Simulation Coordinator**: Multi-walker step orchestration and benchmark execution loops are handled by the evaluation and coordinator modules.

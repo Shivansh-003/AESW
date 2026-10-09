@@ -186,7 +186,19 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 15. Synthetic Graph Experiments
+## 15. Complete AESW Agent & Experiment Harness Integration
+- **Status**: **Completed**
+- **Scope**:
+  - Full end-to-end integration of Evidence Memory, Churn Estimator, Node-Mediated Communication, Adaptive Mode Controller, and Next-Hop Decision Engine into [`AESWAgent`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/agent.py) and [`AESWPolicy`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/agent.py).
+  - Integration with Experiment Engine via `run_experiment(experiment, "aesw")` executable alongside all six comparative baseline search algorithms.
+  - Multi-walker policy orchestrating $k$ autonomous walkers with isolated PRNG streams and cognitive states, communicating exclusively via vertex-anchored [`NodeMediatedExchange`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/communication.py).
+  - Environment-mediated long jumps with isolated PRNG sampling preserving the strict epistemic firewall.
+  - Accurate message tracking $Q$ and total search cost calculation $C_{\text{total}} = M + c_m \cdot Q$.
+  - 25 new automated unit, multi-walker, and harness integration tests (345 total passing suite).
+
+---
+
+## 16. Synthetic Graph Experiments
 - **Status**: *Planned*
 - **Scope**: Systematic benchmarking across Erdős–Rényi, Barabási–Albert, Watts–Strogatz, Grid, and RGG topologies across diverse network sizes and edge densities.
 

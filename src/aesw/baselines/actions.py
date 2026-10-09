@@ -67,3 +67,11 @@ def validate_action(action: SearchAction, observation: Observation) -> None:
                 f"STAY action destination must be None or current node '{observation.current_node}', "
                 f"got '{action.destination}'."
             )
+
+    elif action.action_type == ActionType.JUMP:
+        if action.destination is not None and action.destination != observation.current_node:
+            raise ValueError(
+                f"JUMP action destination must be None or current node '{observation.current_node}', "
+                f"got '{action.destination}'. Environment mediates jump destination."
+            )
+

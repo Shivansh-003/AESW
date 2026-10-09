@@ -46,7 +46,7 @@ class TargetEngine:
         self._rng: np.random.Generator = create_rng(self._seed)
 
         # Resolve initial node
-        resolved_initial: Optional[int | str] = initial_node or spec.initial_node
+        resolved_initial: Optional[int | str] = initial_node if initial_node is not None else spec.initial_node
         if resolved_initial is None:
             if not candidate_nodes:
                 raise ValueError("Must provide either initial_node, spec.initial_node, or non-empty candidate_nodes")

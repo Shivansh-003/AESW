@@ -1,6 +1,6 @@
 """
-Unit and Integration Tests for AESW Next-Hop Decision Engine (M12)
-==================================================================
+Unit and Integration Tests for AESW Next-Hop Decision Engine
+============================================================
 Tests candidate scoring, numerically stable softmax selection,
 multi-criteria tradeoff (evidence, novelty, revisit penalty, delay),
 epistemic observation firewall, mode integration, and RNG isolation.
@@ -150,7 +150,7 @@ class TestCandidateScorerWeights:
 
 
 class TestPositiveEvidenceTerm:
-    """Verifies P(u) extraction and decay under M8 EvidenceCache and M9 churn."""
+    """Verifies P(u) extraction and decay under EvidenceCache and churn estimation."""
 
     def test_evidence_term_without_cache(self) -> None:
         scorer = CandidateScorer()
@@ -775,18 +775,17 @@ class TestScientificBehaviorScenarios:
 
 
 # ==============================================================================
-# 11. END-TO-END SUBSYSTEM INTEGRATION (M8 + M9 + M10 + M11 + M12)
+# 11. END-TO-END SUBSYSTEM INTEGRATION
 # ==============================================================================
 
 
-class TestSubsystemIntegrationM8toM12:
-    """Verifies seamless data flow across M8 (Evidence), M9 (Churn),
-
-    M10 (Sharing), M11 (Mode), and M12 (Next-Hop Decision).
+class TestSubsystemIntegration:
+    """Verifies seamless data flow across Evidence Memory, Churn Estimator,
+    Node-Mediated Sharing, Mode Controller, and Next-Hop Decision Engine.
     """
 
     def test_full_chain_execution(self) -> None:
-        # 1. M9 Churn Estimator tracks local observations
+        # 1. Churn Estimator tracks local observations
         churn_estimator = ChurnEstimator(eta=0.3)
         obs_t0 = _create_mock_observation(current_node=1, time=0, neighbors=(2, 3), active_neighbors=(2, 3))
         obs_t1 = _create_mock_observation(current_node=1, time=1, neighbors=(2, 3), active_neighbors=(2,))
@@ -794,7 +793,7 @@ class TestSubsystemIntegrationM8toM12:
         churn_estimator.update_from_observation(obs_t1)
         lambda_hat = churn_estimator.lambda_hat
 
-        # 2. M8 Evidence Cache stores local clue
+        # 2. Evidence Cache stores local clue
         local_cache = EvidenceCache()
         local_cache.store(
             _make_evidence(
@@ -805,7 +804,7 @@ class TestSubsystemIntegrationM8toM12:
             )
         )
 
-        # 3. M10 Node-Mediated Exchange exchanges clues with shared cache
+        # 3. Node-Mediated Exchange exchanges clues with shared cache
         exchange = NodeMediatedExchange(mode=CommunicationMode.PUSH_PULL)
         shared_cache = exchange.get_node_cache(node_id=1)
         shared_cache.store(
@@ -824,12 +823,12 @@ class TestSubsystemIntegrationM8toM12:
             target_cache=local_cache,
         )
 
-        # 4. M11 Mode Controller determines search mode
+        # 4. Mode Controller determines search mode
         mode_controller = AdaptiveModeController(window_size=3)
         mode = mode_controller.update(timestamp=1, evidence=obs_t1)
         assert mode == SearchMode.LOCAL
 
-        # 5. M12 Next-Hop Decision Engine selects action
+        # 5. Next-Hop Decision Engine selects action
         decision_engine = NextHopDecisionEngine(temperature=1.0)
         decision = decision_engine.decide(
             mode=mode,

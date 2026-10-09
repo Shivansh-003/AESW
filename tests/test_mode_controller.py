@@ -311,7 +311,7 @@ class TestAdaptiveModeControllerCore:
         assert controller.mode == SearchMode.LONG_JUMP
 
     def test_15_received_exchange_evidence_affects_controller(self) -> None:
-        """Test 15: Legitimate evidence received through M10 exchange can reset stagnation."""
+        """Test 15: Legitimate evidence received through node-mediated exchange can reset stagnation."""
         controller = AdaptiveModeController(window_size=3)
 
         controller.update(timestamp=1, useful=False)
@@ -434,8 +434,8 @@ class TestAdaptiveModeControllerCore:
         for attr in forbidden_attributes:
             assert not hasattr(controller, attr)
 
-    def test_22_m8_evidence_integration(self) -> None:
-        """Test 22: Integrates directly with M8 NodeEvidence polarity without duplicate models."""
+    def test_22_evidence_integration(self) -> None:
+        """Test 22: Integrates directly with NodeEvidence polarity without duplicate models."""
         controller = AdaptiveModeController(window_size=3)
         cache = EvidenceCache()
 
@@ -454,7 +454,7 @@ class TestAdaptiveModeControllerCore:
         assert mode == SearchMode.LOCAL
         assert controller.stagnation_steps == 0
 
-    def test_23_m9_churn_estimator_compatibility(self) -> None:
+    def test_23_churn_estimator_compatibility(self) -> None:
         """Test 23: Diagnostic churn rate lambda_hat can be passed and tracked."""
         estimator = ChurnEstimator(eta=0.5, initial_lambda=0.1)
         controller = AdaptiveModeController(window_size=4)
@@ -466,8 +466,8 @@ class TestAdaptiveModeControllerCore:
         assert controller.lambda_hat == estimator.estimated_lambda
         assert controller.lambda_hat > 0.0
 
-    def test_24_m10_received_exchange_integration(self) -> None:
-        """Test 24: Direct integration with M10 exchange output."""
+    def test_24_received_exchange_integration(self) -> None:
+        """Test 24: Direct integration with node exchange output."""
         exchange = NodeMediatedExchange(mode=CommunicationMode.PUSH_PULL)
         controller = AdaptiveModeController(window_size=3)
 
@@ -492,22 +492,22 @@ class TestAdaptiveModeControllerCore:
         W = 3
         controller = AdaptiveModeController(window_size=W)
 
-        # Phase 1: Initially LOCAL
+        # Stage 1: Initially LOCAL
         assert controller.mode == SearchMode.LOCAL
 
-        # Phase 2: Stagnate for W steps -> transitions to LONG_JUMP
+        # Stage 2: Stagnate for W steps -> transitions to LONG_JUMP
         controller.update(timestamp=1, useful=False)
         controller.update(timestamp=2, useful=False)
         controller.update(timestamp=3, useful=False)
         assert controller.mode == SearchMode.LONG_JUMP
         assert controller.transition_count == 1
 
-        # Phase 3: Remain in LONG_JUMP while stagnant
+        # Stage 3: Remain in LONG_JUMP while stagnant
         controller.update(timestamp=4, useful=False)
         assert controller.mode == SearchMode.LONG_JUMP
         assert controller.transition_count == 1
 
-        # Phase 4: Useful evidence arrives -> transitions back to LOCAL
+        # Stage 4: Useful evidence arrives -> transitions back to LOCAL
         ev_target = _create_sample_evidence(node_id=1, timestamp=5, signal_strength=0.9)
         controller.update(timestamp=5, evidence=ev_target)
         assert controller.mode == SearchMode.LOCAL

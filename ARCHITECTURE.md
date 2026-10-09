@@ -84,7 +84,7 @@ The system follows a strict layered design to ensure modularity, separation of c
 
 To preserve immutability and testability across all simulation runs:
 
-1. **Specification Phase**:
+1. **Specification Stage**:
    ```text
    YAML Configs ──► load_config() ──► Validation ──► ProblemDefinition (Frozen Dataclass)
    ```

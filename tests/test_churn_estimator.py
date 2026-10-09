@@ -335,8 +335,8 @@ class TestChurnEstimatorCore:
         assert rate >= 0.0
         assert estimator.current_neighborhood == frozenset({2})
 
-    def test_19_m8_evidence_memory_integration(self) -> None:
-        """Test 19: Estimator output directly parameterizes M8 EvidenceCache decay evaluations."""
+    def test_19_evidence_memory_integration(self) -> None:
+        """Test 19: Estimator output directly parameterizes EvidenceCache decay evaluations."""
         estimator = ChurnEstimator(eta=0.5)
         cache = EvidenceCache()
 
@@ -375,7 +375,7 @@ class TestChurnEstimatorCore:
 
 
 class TestScientificBehavior:
-    """Scientific validation linking M9 volatility estimation to M8 adaptive memory decay."""
+    """Scientific validation linking volatility estimation to adaptive memory decay."""
 
     def test_scientific_volatility_to_memory_decay_coupling(self) -> None:
         """Verify: Low churn -> slow decay; High churn -> fast decay.

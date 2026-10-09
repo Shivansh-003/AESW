@@ -74,7 +74,7 @@ The controller evaluates information availability strictly from the walker's leg
 | :--- | :---: | :--- |
 | **Positive Sensor Detection** | **YES** | Sensor detection ($\text{signal} > 0$ or `detected=True`) provides strong proximity clues, even if noisy. |
 | **Positive Node Evidence** | **YES** | Records with `EvidencePolarity.POSITIVE` indicate target cues. |
-| **Legitimately Received Clue** | **YES** | Positive clues received through M10 node-cache exchange (`RECEIVED_EXCHANGE`) count as real information. |
+| **Legitimately Received Clue** | **YES** | Positive clues received through node-cache exchange (`RECEIVED_EXCHANGE`) count as real information. |
 | **Repeated / Stale Evidence** | **NO** | Re-observing the exact same record with identical timestamp and signal does **not** reset stagnation. |
 | **Negative Evidence** | **NO** | Ordinary absence confirmation (empty node) does not indicate target proximity and does not reset stagnation. |
 | **Empty Payload** | **NO** | No information acquired ($I(t) = 0$). |
@@ -125,6 +125,6 @@ assert controller.transition_count == 2
 
 ## 6. Integration Across Subsystems
 
-- **M8 Evidence Memory**: Consumes `NodeEvidence` and `EvidencePolarity` without duplicate data structures.
-- **M9 Churn Estimator**: Exposes `lambda_hat` property and accepts churn rate updates for diagnostics.
-- **M10 Information Sharing**: Processes evidence received via `NodeMediatedExchange`. When shared positive cues arrive at a visited node, they reset walker stagnation and maintain `LOCAL` exploration.
+- **Evidence Memory**: Consumes `NodeEvidence` and `EvidencePolarity` without duplicate data structures.
+- **Churn Estimator**: Exposes `lambda_hat` property and accepts churn rate updates for diagnostics.
+- **Information Sharing**: Processes evidence received via `NodeMediatedExchange`. When shared positive cues arrive at a visited node, they reset walker stagnation and maintain `LOCAL` exploration.

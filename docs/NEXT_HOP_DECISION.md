@@ -41,7 +41,7 @@ $$S(u) = a \cdot P(u) + b \cdot N(u) - g \cdot R(u) - d \cdot D(u)$$
 where $a, b, g, d \ge 0$ are non-negative weighting parameters configured by the experiment or tuned by the mode controller.
 
 #### 1. Positive Evidence Strength $P(u) \in [0.0, 1.0]$
-Represents target presence information stored in the walker's local M8 `EvidenceCache` for vertex $u$, weighted by M9 estimated graph churn $\hat{\lambda}$:
+Represents target presence information stored in the walker's local `EvidenceCache` for vertex $u$, weighted by estimated graph churn $\hat{\lambda}$:
 
 $$P(u) = \begin{cases} c_{\text{eff}}(u, t) = c_0(u) \cdot \exp(-\hat{\lambda} \cdot (t - t_{\text{obs}})) & \text{if } \text{Polarity}(u) = \text{POSITIVE} \\ 0.0 & \text{otherwise} \end{cases}$$
 
@@ -111,23 +111,23 @@ Subtracting $S_{\max} = \max_w S(w)$ guarantees that the exponent numerator is a
 
 ---
 
-## 4. Subsystem Integration Flow (M8–M12)
+## 4. Subsystem Integration Flow
 
 The Next-Hop Decision Engine integrates seamlessly into the end-to-end AESW processing pipeline:
 
 ```text
-  Observation Snapshot (M5)
+  Observation Snapshot
             │
-            ├──► Churn Estimator (M9) ──► Computes λ_hat
+            ├──► Churn Estimator ────────► Computes λ_hat
             │                                  │
-            ├──► Evidence Memory (M8) ◄────────┘ (Decays evidence weights)
+            ├──► Evidence Memory ◄─────────────┘ (Decays evidence weights)
             │         │
-            ├──► Node Exchange (M10) ──► Pushes/Pulls shared evidence
+            ├──► Node Exchange ──────────► Pushes/Pulls shared evidence
             │         │
-            ├──► Mode Controller (M11) ─► Determines SearchMode (LOCAL vs LONG_JUMP)
+            ├──► Mode Controller ────────► Determines SearchMode (LOCAL vs LONG_JUMP)
             │                                  │
             ▼                                  ▼
-     Next-Hop Decision Engine (M12) ◄──────────┘
+     Next-Hop Decision Engine ◄────────────────┘
             │
             ▼
      SearchAction ready for environment execution
@@ -165,6 +165,6 @@ The Next-Hop Decision Engine is fully verified by `tests/test_next_hop_decision.
   - *Scenario A*: Fresh positive target evidence attracts walker over unvisited alternative.
   - *Scenario B*: High churn decays stale clues, allowing fresh novelty to dominate.
   - *Scenario C*: Revisit penalty strongly avoids immediate backtracking.
-- **Subsystem Integration (1 test)**: End-to-end data pipeline coupling M8 + M9 + M10 + M11 + M12.
+- **Subsystem Integration (1 test)**: End-to-end data pipeline coupling Evidence Memory, Churn Estimator, Node Exchange, Mode Controller, and Next-Hop Decision Engine.
 
-Full regression status across the entire codebase: **320 tests passed, 0 failures**.
+Full regression status across the entire codebase: **346 tests passed, 0 failures**.

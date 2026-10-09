@@ -39,6 +39,7 @@ from aesw.aesw.next_hop import (
     SoftmaxSelector,
     NextHopDecisionEngine,
 )
+from aesw.aesw.agent import AESWAgent, AESWPolicy
 
 __all__: list[str] = [
     "ChurnEstimator",
@@ -58,4 +59,6 @@ __all__: list[str] = [
     "CandidateScorer",
     "SoftmaxSelector",
     "NextHopDecisionEngine",
+    "AESWAgent",
+    "AESWPolicy",
 ]

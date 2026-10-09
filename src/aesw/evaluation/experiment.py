@@ -45,6 +45,7 @@ from aesw.baselines.types import BaselineType
 from aesw.baselines.base import BaselinePolicy
 from aesw.baselines.factory import create_baseline
 from aesw.baselines.independent_walkers import IndependentRandomWalkers
+from aesw.aesw.agent import AESWPolicy
 from aesw.evaluation.metrics import RunMetrics, AggregatedMetrics, compute_aggregated_metrics
 
 
@@ -85,6 +86,7 @@ class ExperimentInstance:
             seed_target=self.sub_seeds["target"],
             seed_detection=self.sub_seeds["detection"],
             seed_observation=self.sub_seeds["observation"],
+            seed_jump=self.sub_seeds.get("jump", (self.sub_seeds["dynamics"] + 54321) % (2**31 - 1)),
         )
 
 
@@ -127,11 +129,12 @@ class ExperimentResult:
     target_trajectory: tuple[int | str, ...]
     walker_trajectories: Mapping[int, tuple[int | str, ...]]
     parameters: Mapping[str, Any]
+    trace: Optional[Sequence[Mapping[str, Any]]] = None
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def to_dict(self) -> dict[str, Any]:
         """Convert result into a JSON-serializable dictionary."""
-        return {
+        data = {
             "experiment_id": self.experiment_id,
             "algorithm": self.algorithm,
             "seed": self.seed,
@@ -160,6 +163,9 @@ class ExperimentResult:
             "parameters": dict(self.parameters),
             "timestamp": self.timestamp,
         }
+        if self.trace is not None:
+            data["trace"] = [dict(t) for t in self.trace]
+        return data
 
     def to_json(self, filepath: Optional[Union[str, Path]] = None, indent: int = 2) -> str:
         """Serialize result to a formatted JSON string, optionally writing to a file."""
@@ -324,6 +330,19 @@ def _apply_overrides(base_problem: ProblemDefinition, overrides: Mapping[str, An
         seed=sim.seed,
     )
 
+    # Delay spec overrides
+    del_spec = base_problem.delay
+    min_d = int(overrides.get("min_delay", del_spec.min_delay))
+    max_d = int(overrides.get("max_delay", del_spec.max_delay))
+    dist_type = str(overrides.get("delay_distribution", overrides.get("distribution_type", del_spec.distribution_type)))
+    mean_d = float(overrides.get("mean_delay", del_spec.mean_delay if (min_d == del_spec.min_delay and max_d == del_spec.max_delay) else (min_d + max_d) / 2.0))
+    new_delay = DelaySpecification(
+        distribution_type=dist_type,
+        min_delay=min_d,
+        max_delay=max_d,
+        mean_delay=mean_d,
+    )
+
     # Cost spec overrides
     c = base_problem.cost
     c_m = float(overrides.get("c_m", c.c_m))
@@ -335,7 +354,7 @@ def _apply_overrides(base_problem: ProblemDefinition, overrides: Mapping[str, An
         target=new_target,
         detection=new_detection,
         observation=new_obs,
-        delay=base_problem.delay,
+        delay=new_delay,
         walker=new_walker,
         simulation=new_sim,
         cost=new_cost,
@@ -393,7 +412,7 @@ def generate_experiment(
 
     # 2. Derive isolated deterministic seeds using NumPy SeedSequence
     ss = np.random.SeedSequence(master_seed)
-    spawned = ss.spawn(7)
+    spawned = ss.spawn(8)
     sub_seeds: dict[str, int] = {
         "graph": int(spawned[0].generate_state(1)[0]),
         "dynamics": int(spawned[1].generate_state(1)[0]),
@@ -402,6 +421,7 @@ def generate_experiment(
         "observation": int(spawned[4].generate_state(1)[0]),
         "init": int(spawned[5].generate_state(1)[0]),
         "algorithm": int(spawned[6].generate_state(1)[0]),
+        "jump": int(spawned[7].generate_state(1)[0]),
     }
 
     # 3. Generate static graph topology
@@ -448,11 +468,14 @@ def _resolve_baseline_type(name: str) -> BaselineType:
         "non_backtracking_walk": BaselineType.NON_BACKTRACKING,
         "independent_random_walkers": BaselineType.INDEPENDENT_RANDOM_WALKERS,
         "k_independent_random_walkers": BaselineType.INDEPENDENT_RANDOM_WALKERS,
+        "k_walk": BaselineType.INDEPENDENT_RANDOM_WALKERS,
+        "degree": BaselineType.DEGREE_BASED,
         "degree_based": BaselineType.DEGREE_BASED,
         "degree_based_walk": BaselineType.DEGREE_BASED,
         "flooding": BaselineType.FLOODING,
         "ant_colony": BaselineType.ANT_COLONY,
         "ant_colony_walk": BaselineType.ANT_COLONY,
+        "aesw": BaselineType.AESW,
     }
     if clean in alias_map:
         return alias_map[clean]
@@ -486,7 +509,7 @@ def run_experiment(
     num_walkers = experiment.problem_def.walker.count
     base_algo_seed = experiment.sub_seeds["algorithm"]
 
-    multi_walker_policy: Optional[IndependentRandomWalkers] = None
+    multi_walker_policy: Optional[Union[IndependentRandomWalkers, AESWPolicy]] = None
     walker_policies: dict[int, BaselinePolicy] = {}
 
     if isinstance(algorithm, str):
@@ -495,6 +518,8 @@ def run_experiment(
 
         if b_type == BaselineType.INDEPENDENT_RANDOM_WALKERS:
             multi_walker_policy = IndependentRandomWalkers(k=num_walkers, base_seed=base_algo_seed)
+        elif b_type == BaselineType.AESW:
+            multi_walker_policy = AESWPolicy(k=num_walkers, seed=base_algo_seed, **kwargs)
         else:
             # Instantiate policies for each walker with isolated seeds
             for w_id in range(num_walkers):
@@ -505,12 +530,19 @@ def run_experiment(
         algo_name = algorithm.value
         if algorithm == BaselineType.INDEPENDENT_RANDOM_WALKERS:
             multi_walker_policy = IndependentRandomWalkers(k=num_walkers, base_seed=base_algo_seed)
+        elif algorithm == BaselineType.AESW:
+            multi_walker_policy = AESWPolicy(k=num_walkers, seed=base_algo_seed, **kwargs)
         else:
             for w_id in range(num_walkers):
                 w_seed = base_algo_seed + w_id * 1000
                 walker_policies[w_id] = create_baseline(algorithm, seed=w_seed, **kwargs)
 
     elif isinstance(algorithm, IndependentRandomWalkers):
+        algo_name = algorithm.metadata.name
+        multi_walker_policy = algorithm
+        multi_walker_policy.reset()
+
+    elif isinstance(algorithm, AESWPolicy):
         algo_name = algorithm.metadata.name
         multi_walker_policy = algorithm
         multi_walker_policy.reset()
@@ -544,6 +576,19 @@ def run_experiment(
                     actions[w_id] = walker_policies[w_id].decide(obs)
 
         coordinator.step(actions)
+
+    # Synchronize communication messages Q from multi-walker policy if applicable
+    if multi_walker_policy is not None and hasattr(multi_walker_policy, "total_messages"):
+        coordinator.record_messages(multi_walker_policy.total_messages)
+
+    # Extract diagnostic decision traces if supported
+    traces = None
+    if isinstance(multi_walker_policy, AESWPolicy):
+        all_traces = []
+        for w_traces in multi_walker_policy.get_traces().values():
+            all_traces.extend(w_traces)
+        all_traces.sort(key=lambda x: (x.get("time", 0), x.get("walker_id", 0)))
+        traces = all_traces
 
     # Collect metrics
     metrics = coordinator.get_run_metrics(
@@ -598,6 +643,7 @@ def run_experiment(
         target_trajectory=coordinator.target_trajectory,
         walker_trajectories=coordinator.walker_trajectories,
         parameters=parameters,
+        trace=traces,
     )
 
     if save_artifact or (output_dir is not None):

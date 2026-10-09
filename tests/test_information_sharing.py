@@ -322,11 +322,11 @@ class TestCommunicationCore:
         exchange.push(walker_id="A", at_node=1, evidence=ev_new, timestamp=20)
         exchange.pull(walker_id="B", at_node=1, timestamp=21, target_cache=cache_b)
 
-        # Cleanly updated using M8 EvidenceCache rules
+        # Cleanly updated using EvidenceCache rules
         assert cache_b.get_raw(5).confidence == 0.9
         assert cache_b.get_raw(5).timestamp == 20
 
-    def test_15_m9_churn_estimator_integration(self) -> None:
+    def test_15_churn_estimator_integration(self) -> None:
         """Test 15: Received evidence is evaluated using receiver's own local churn estimate lambda_hat."""
         exchange = NodeMediatedExchange(mode=CommunicationMode.PUSH_PULL)
         cache_b = EvidenceCache()
