@@ -146,6 +146,19 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
+## 12. AESW Information Sharing / Node-Mediated Communication
+- **Status**: **Completed**
+- **Scope**:
+  - Decentralized node-mediated information exchange architecture (`Walker A -> Node Cache -> Walker B`).
+  - Strict absence of direct peer-to-peer walker links.
+  - Four formal communication modes: `NO_SHARING`, `PUSH`, `PULL`, and `PUSH_PULL`.
+  - Vertex-anchored shared caches ([`SharedNodeCache`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/communication.py)) encapsulating local [`EvidenceCache`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/cache.py) storage.
+  - Communication coordinator ([`NodeMediatedExchange`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/communication.py)) tracking message accounting $Q$ under total cost model $C_{\text{total}} = M + c_m \cdot Q$.
+  - Original source creator attribution preserved (`walker_id == A`) with received provenance tagged as `RECEIVED_EXCHANGE`.
+  - 23 automated unit, multi-walker, and scientific behavioral tests (238 total passing suite).
+
+---
+
 ## 12. Synthetic Graph Experiments
 - **Status**: *Planned*
 - **Scope**: Systematic benchmarking across Erdős–Rényi, Barabási–Albert, Watts–Strogatz, Grid, and RGG topologies across diverse network sizes and edge densities.

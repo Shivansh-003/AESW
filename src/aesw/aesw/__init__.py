@@ -12,15 +12,30 @@ Three Central Novelty Pillars:
 Key Components:
 - Churn Estimator (tracking edge turnover rates)
 - Evidence Memory Integration (decaying node cache)
+- Node-Mediated Communication Exchange (push, pull, push_pull)
 - Mode Controller (local exploitation vs. global exploration)
 - Next-Hop Candidate Scorer (incorporating edge availability, evidence, degree)
 - Softmax Stochastic Action Selector
 """
 
 from aesw.aesw.churn import ChurnEstimator, DEFAULT_ETA, DEFAULT_EPSILON
+from aesw.aesw.communication import (
+    CommunicationMode,
+    CommunicationEvent,
+    CommunicationMetrics,
+    SharedNodeCache,
+    NodeMediatedExchange,
+    validate_communication_mode,
+)
 
 __all__: list[str] = [
     "ChurnEstimator",
     "DEFAULT_ETA",
     "DEFAULT_EPSILON",
+    "CommunicationMode",
+    "CommunicationEvent",
+    "CommunicationMetrics",
+    "SharedNodeCache",
+    "NodeMediatedExchange",
+    "validate_communication_mode",
 ]

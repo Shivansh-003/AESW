@@ -71,7 +71,8 @@ adaptive-graph-search/
 │   ├── BASELINE_ALGORITHMS.md  # Benchmark search policies, fairness, and action model
 │   ├── EXPERIMENTAL_HARNESS.md # Experiment engine, generation vs execution, and artifacts
 │   ├── EVIDENCE_MEMORY.md      # Adaptive exponential decay and local evidence cache
-│   └── CHURN_ESTIMATOR.md      # Local online churn estimation and volatility inference
+│   ├── CHURN_ESTIMATOR.md      # Local online churn estimation and volatility inference
+│   └── INFORMATION_SHARING.md  # Decentralized node-mediated information sharing
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -113,7 +114,8 @@ adaptive-graph-search/
 │       │   ├── ant_colony.py   # Private pheromone AntColonyWalkPolicy
 │       │   └── factory.py      # Baseline factory dispatcher
 │       ├── aesw/               # Proposed AESW search algorithm
-│       │   └── churn.py        # Local online ChurnEstimator and Jaccard overlap
+│       │   ├── churn.py        # Local online ChurnEstimator and Jaccard overlap
+│       │   └── communication.py # Node-mediated SharedNodeCache & NodeMediatedExchange
 │       ├── memory/             # Evidence caching and decay mechanisms
 │       │   ├── types.py        # EvidencePolarity and EvidenceSource enums
 │       │   ├── models.py       # NodeEvidence and WeightedEvidence dataclasses
@@ -138,7 +140,8 @@ adaptive-graph-search/
 │   ├── test_baselines.py       # Benchmark search policy tests and action validation
 │   ├── test_experiment_engine.py # Experimental harness, coordination, and benchmark tests
 │   ├── test_evidence_memory.py # Node evidence, exponential decay, and cache tests
-│   └── test_churn_estimator.py # Online churn estimation and scientific coupling tests
+│   ├── test_churn_estimator.py # Online churn estimation and scientific coupling tests
+│   └── test_information_sharing.py # Node-mediated information sharing & cost tests
 
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)

@@ -142,6 +142,21 @@ class NodeEvidence:
             effective_confidence=eff_conf,
         )
 
+    def as_received(self) -> NodeEvidence:
+        """Return an immutable copy marked as RECEIVED_EXCHANGE, preserving original creator walker_id."""
+        return NodeEvidence(
+            node_id=self.node_id,
+            visited=self.visited,
+            target_found=self.target_found,
+            signal_strength=self.signal_strength,
+            timestamp=self.timestamp,
+            walker_id=self.walker_id,
+            confidence=self.confidence,
+            polarity=self.polarity,
+            source=EvidenceSource.RECEIVED_EXCHANGE,
+            metadata=dict(self.metadata),
+        )
+
     def to_dict(self) -> dict[str, Any]:
         """Convert evidence record to a dictionary."""
         return {
