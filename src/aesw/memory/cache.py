@@ -55,6 +55,14 @@ class EvidenceCache:
             raise ValueError(f"default_lambda_hat must be non-negative, got {value}")
         self._default_lambda_hat = float(value)
 
+    def _resolve_lambda_hat(self, lambda_hat: Optional[Union[float, Any]]) -> float:
+        """Resolve a churn rate float from an explicit value or a ChurnEstimator."""
+        if lambda_hat is None:
+            return self._default_lambda_hat
+        if hasattr(lambda_hat, "estimated_lambda"):
+            return float(lambda_hat.estimated_lambda)
+        return float(lambda_hat)
+
     @property
     def max_capacity(self) -> Optional[int]:
         """Maximum capacity of the evidence cache."""
@@ -203,7 +211,7 @@ class EvidenceCache:
         if raw is None:
             return None
 
-        rate = self._default_lambda_hat if lambda_hat is None else float(lambda_hat)
+        rate = self._resolve_lambda_hat(lambda_hat)
         return raw.evaluate(current_time=current_time, lambda_hat=rate)
 
     def all_entries(
@@ -222,7 +230,7 @@ class EvidenceCache:
         Returns:
             Mapping from node_id to WeightedEvidence.
         """
-        rate = self._default_lambda_hat if lambda_hat is None else float(lambda_hat)
+        rate = self._resolve_lambda_hat(lambda_hat)
         result: dict[Union[int, str], WeightedEvidence] = {}
 
         for node_id, raw in self._entries.items():
@@ -294,7 +302,7 @@ class EvidenceCache:
         Returns:
             Count of removed entries.
         """
-        rate = self._default_lambda_hat if lambda_hat is None else float(lambda_hat)
+        rate = self._resolve_lambda_hat(lambda_hat)
         stale_nodes: list[Union[int, str]] = []
 
         for node_id, raw in self._entries.items():

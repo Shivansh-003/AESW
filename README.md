@@ -70,7 +70,8 @@ adaptive-graph-search/
 │   ├── OBSERVATION_AND_PARTIAL_VISIBILITY.md # Firewall, budget B, and local history
 │   ├── BASELINE_ALGORITHMS.md  # Benchmark search policies, fairness, and action model
 │   ├── EXPERIMENTAL_HARNESS.md # Experiment engine, generation vs execution, and artifacts
-│   └── EVIDENCE_MEMORY.md      # Adaptive exponential decay and local evidence cache
+│   ├── EVIDENCE_MEMORY.md      # Adaptive exponential decay and local evidence cache
+│   └── CHURN_ESTIMATOR.md      # Local online churn estimation and volatility inference
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -112,6 +113,7 @@ adaptive-graph-search/
 │       │   ├── ant_colony.py   # Private pheromone AntColonyWalkPolicy
 │       │   └── factory.py      # Baseline factory dispatcher
 │       ├── aesw/               # Proposed AESW search algorithm
+│       │   └── churn.py        # Local online ChurnEstimator and Jaccard overlap
 │       ├── memory/             # Evidence caching and decay mechanisms
 │       │   ├── types.py        # EvidencePolarity and EvidenceSource enums
 │       │   ├── models.py       # NodeEvidence and WeightedEvidence dataclasses
@@ -135,7 +137,8 @@ adaptive-graph-search/
 │   ├── test_observation.py     # Partial visibility, budget B, and firewall tests
 │   ├── test_baselines.py       # Benchmark search policy tests and action validation
 │   ├── test_experiment_engine.py # Experimental harness, coordination, and benchmark tests
-│   └── test_evidence_memory.py # Node evidence, exponential decay, and cache tests
+│   ├── test_evidence_memory.py # Node evidence, exponential decay, and cache tests
+│   └── test_churn_estimator.py # Online churn estimation and scientific coupling tests
 
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)

@@ -131,7 +131,18 @@ This document outlines the research implementation roadmap for the decentralized
   - Local node-level memory cache container ([`EvidenceCache`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/cache.py)) with deterministic update rules, observation ingestion, and stale entry pruning.
   - 18 automated unit and integration tests (189 total passing suite).
 
+---
 
+## 11. AESW Online Churn Estimator
+- **Status**: **Completed**
+- **Scope**:
+  - Local online estimation of dynamic graph volatility $\hat{\lambda}$ from partial, locally observed neighbor transitions over time.
+  - Jaccard neighborhood overlap metric $s = \frac{|N_{\text{prev}} \cap N_{\text{curr}}|}{|N_{\text{prev}} \cup N_{\text{curr}}|}$.
+  - Instantaneous raw churn rate $\lambda_{\text{raw}} = \frac{-\ln(s_{\text{safe}})}{\Delta t}$ with positive numerical floor $\epsilon > 0$ for zero overlap.
+  - Exponential smoothing $\hat{\lambda}_t = (1 - \eta) \cdot \hat{\lambda}_{t-1} + \eta \cdot \lambda_{\text{raw}}$ enforcing non-negativity and finiteness.
+  - Independent estimator instances per walker preserving strict epistemic boundary (zero access to $p_{\text{on}}, p_{\text{off}}$, global graph, or hidden states).
+  - Clean integration with Evidence Memory ([`EvidenceCache`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/cache.py)) dynamically parameterizing adaptive exponential decay $w(t) = \exp(-\hat{\lambda} \cdot \text{age})$.
+  - 26 automated unit and scientific validation tests (215 total passing suite).
 
 ---
 

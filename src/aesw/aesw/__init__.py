@@ -9,7 +9,7 @@ Three Central Novelty Pillars:
 2. Adaptive local exploitation versus global exploration based on information gain.
 3. Asymmetric sharing of positive (target clues) and negative (cleared nodes) evidence.
 
-Key Planned Components:
+Key Components:
 - Churn Estimator (tracking edge turnover rates)
 - Evidence Memory Integration (decaying node cache)
 - Mode Controller (local exploitation vs. global exploration)
@@ -17,4 +17,10 @@ Key Planned Components:
 - Softmax Stochastic Action Selector
 """
 
-__all__: list[str] = []
+from aesw.aesw.churn import ChurnEstimator, DEFAULT_ETA, DEFAULT_EPSILON
+
+__all__: list[str] = [
+    "ChurnEstimator",
+    "DEFAULT_ETA",
+    "DEFAULT_EPSILON",
+]
