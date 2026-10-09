@@ -27,6 +27,11 @@ from aesw.aesw.communication import (
     NodeMediatedExchange,
     validate_communication_mode,
 )
+from aesw.aesw.mode import (
+    SearchMode,
+    AdaptiveModeController,
+    validate_search_mode,
+)
 
 __all__: list[str] = [
     "ChurnEstimator",
@@ -38,4 +43,7 @@ __all__: list[str] = [
     "SharedNodeCache",
     "NodeMediatedExchange",
     "validate_communication_mode",
+    "SearchMode",
+    "AdaptiveModeController",
+    "validate_search_mode",
 ]

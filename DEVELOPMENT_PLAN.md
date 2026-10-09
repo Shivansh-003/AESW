@@ -159,7 +159,19 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 12. Synthetic Graph Experiments
+## 13. AESW Adaptive Mode Controller
+- **Status**: **Completed**
+- **Scope**:
+  - Information-driven mode selection between `SearchMode.LOCAL` (local exploitation) and `SearchMode.LONG_JUMP` (global dispersion).
+  - Sliding horizon window $W$ tracking recent information acquisition events.
+  - Consecutive stagnation counter $S(t)$ triggering `LONG_JUMP` strictly when $S(t) \ge W$.
+  - Automatic return to `LOCAL` upon acquiring novel positive target cues.
+  - Epistemic firewall and scope isolation: mode decision only (no jump execution or candidate ranking).
+  - 29 automated unit, multi-walker, and scientific behavioral tests (267 total passing suite).
+
+---
+
+## 14. Synthetic Graph Experiments
 - **Status**: *Planned*
 - **Scope**: Systematic benchmarking across Erdős–Rényi, Barabási–Albert, Watts–Strogatz, Grid, and RGG topologies across diverse network sizes and edge densities.
 
