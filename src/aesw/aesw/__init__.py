@@ -32,6 +32,13 @@ from aesw.aesw.mode import (
     AdaptiveModeController,
     validate_search_mode,
 )
+from aesw.aesw.next_hop import (
+    CandidateScore,
+    NextHopDecision,
+    CandidateScorer,
+    SoftmaxSelector,
+    NextHopDecisionEngine,
+)
 
 __all__: list[str] = [
     "ChurnEstimator",
@@ -46,4 +53,9 @@ __all__: list[str] = [
     "SearchMode",
     "AdaptiveModeController",
     "validate_search_mode",
+    "CandidateScore",
+    "NextHopDecision",
+    "CandidateScorer",
+    "SoftmaxSelector",
+    "NextHopDecisionEngine",
 ]

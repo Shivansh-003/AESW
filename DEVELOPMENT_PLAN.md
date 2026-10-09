@@ -171,42 +171,58 @@ This document outlines the research implementation roadmap for the decentralized
 
 ---
 
-## 14. Synthetic Graph Experiments
+## 14. AESW Next-Hop Decision Engine
+- **Status**: **Completed**
+- **Scope**:
+  - Explainable multi-factor candidate scoring: $S(u) = a \cdot P(u) + b \cdot N(u) - g \cdot R(u) - d \cdot D(u)$.
+  - Time-decayed positive evidence strength $P(u)$ integrated with [`EvidenceCache`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/memory/cache.py) and [`ChurnEstimator`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/churn.py) volatility estimate $\hat{\lambda}$.
+  - Novelty incentive $N(u) = \frac{1.0}{1.0 + \text{visit\_count}}$ in $(0.0, 1.0]$.
+  - Revisit penalty $R(u) = \text{float}(\text{visit\_count})$ disincentivizing cyclic loops and backtracking.
+  - Traversal delay term $D(u) \ge 1.0$ consuming local edge costs.
+  - Numerically stabilized softmax action selection $P_{\text{select}}(u) = \frac{\exp((S(u) - S_{\max})/T)}{\sum_k \exp((S(k) - S_{\max})/T)}$ with exploration temperature $T > 0$.
+  - Structured explainable records ([`CandidateScore`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/next_hop.py), [`NextHopDecision`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/aesw/next_hop.py)) emitting validated [`SearchAction`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/baselines/actions.py).
+  - Epistemic firewall: candidate pool strictly extracted from partial observation active links; zero leakage of ground truth, $p_{\text{on}}/p_{\text{off}}$, or true target.
+  - 53 automated unit, integration, and scientific validation tests (320 total passing suite).
+
+---
+
+## 15. Synthetic Graph Experiments
 - **Status**: *Planned*
 - **Scope**: Systematic benchmarking across Erdős–Rényi, Barabási–Albert, Watts–Strogatz, Grid, and RGG topologies across diverse network sizes and edge densities.
 
 ---
 
-## 13. Dynamic Regime Sensitivity Analysis
+## 16. Dynamic Regime Sensitivity Analysis
 - **Status**: *Planned*
 - **Scope**: Stress testing under varying churn regimes from static topologies up to very fast edge churn.
 
 ---
 
-## 14. Noise, Partial Observability, & Uncertainty Sweeps
+## 17. Noise, Partial Observability, & Uncertainty Sweeps
 - **Status**: *Planned*
 - **Scope**: Sensitivity analysis across false alarm rates, detection failure rates, and traversal delays.
 
 ---
 
-## 15. Real-World Dynamic Network Validation
+## 18. Real-World Dynamic Network Validation
 - **Status**: *Planned*
 - **Scope**: Empirical evaluation on real-world Autonomous Systems graph trace series (AS-733) demonstrating performance in realistic non-synthetic dynamic environments.
 
 ---
 
-## 16. Statistical Significance Analysis & Hypothesis Testing
+## 19. Statistical Significance Analysis & Hypothesis Testing
 - **Status**: *Planned*
 - **Scope**: Two-sample t-tests, Mann-Whitney U tests, effect size calculations (Cohen's $d$), and 95% confidence intervals across $\ge 50$ independent stochastic seeds.
 
 ---
 
-## 17. Research Visualization Suite
+## 20. Research Visualization Suite
 - **Status**: *Planned*
 - **Scope**: Generation of publication-quality figures: trajectory traces, success rate curves, cost-benefit trade-offs, and regime response heatmaps.
 
 ---
 
-## 18. Comprehensive Manuscript Preparation & Artifact Packaging
+## 21. Comprehensive Manuscript Preparation & Artifact Packaging
 - **Status**: *Planned*
 - **Scope**: Synthesis of findings into a structured scientific research manuscript and reproducible artifact bundle.
+

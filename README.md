@@ -73,7 +73,8 @@ adaptive-graph-search/
 │   ├── EVIDENCE_MEMORY.md      # Adaptive exponential decay and local evidence cache
 │   ├── CHURN_ESTIMATOR.md      # Local online churn estimation and volatility inference
 │   ├── INFORMATION_SHARING.md  # Decentralized node-mediated information sharing
-│   └── MODE_CONTROLLER.md      # Adaptive mode controller (LOCAL vs LONG_JUMP)
+│   ├── MODE_CONTROLLER.md      # Adaptive mode controller (LOCAL vs LONG_JUMP)
+│   └── NEXT_HOP_DECISION.md    # Multi-factor candidate scoring and softmax action selection
 │
 ├── src/
 │   └── aesw/                   # Core research package
@@ -117,7 +118,8 @@ adaptive-graph-search/
 │       ├── aesw/               # Proposed AESW search algorithm
 │       │   ├── churn.py        # Local online ChurnEstimator and Jaccard overlap
 │       │   ├── communication.py # Node-mediated SharedNodeCache & NodeMediatedExchange
-│       │   └── mode.py         # AdaptiveModeController and SearchMode gating
+│       │   ├── mode.py         # AdaptiveModeController and SearchMode gating
+│       │   └── next_hop.py     # Multi-criteria scoring, softmax selection, NextHopDecisionEngine
 │       ├── memory/             # Evidence caching and decay mechanisms
 │       │   ├── types.py        # EvidencePolarity and EvidenceSource enums
 │       │   ├── models.py       # NodeEvidence and WeightedEvidence dataclasses
@@ -144,7 +146,8 @@ adaptive-graph-search/
 │   ├── test_evidence_memory.py # Node evidence, exponential decay, and cache tests
 │   ├── test_churn_estimator.py # Online churn estimation and scientific coupling tests
 │   ├── test_information_sharing.py # Node-mediated information sharing & cost tests
-│   └── test_mode_controller.py # Adaptive mode controller (LOCAL vs LONG_JUMP) tests
+│   ├── test_mode_controller.py # Adaptive mode controller (LOCAL vs LONG_JUMP) tests
+│   └── test_next_hop_decision.py # Candidate scoring, softmax selection, and next-hop decision tests
 
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)
@@ -236,7 +239,7 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 189 tests verify:
+All 320 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
@@ -253,6 +256,10 @@ All 189 tests verify:
 - Experimental harness (`generate_experiment`, `run_experiment`, `run_benchmark`) guaranteeing fair evaluation of multiple algorithms on identical environment realizations.
 - Statistical metrics aggregation (`compute_aggregated_metrics`) with 95% Student's t confidence intervals and structured JSON artifact persistence.
 - AESW evidence memory models (`NodeEvidence`, `WeightedEvidence`), adaptive exponential decay ($w = \exp(-\hat{\lambda} \cdot \text{age})$), characteristic half-life, dual positive/negative evidence polarities, local cache management (`EvidenceCache`), update rules, and observation ingestion.
+- AESW online churn estimation (`ChurnEstimator`), local Jaccard neighborhood overlap ($s$), numerical stability floors, exponential smoothing ($\hat{\lambda}_t$), and dynamic coupling to evidence memory decay.
+- AESW node-mediated information sharing (`NodeMediatedExchange`, `SharedNodeCache`), communication modes (`NO_SHARING`, `PUSH`, `PULL`, `PUSH_PULL`), and exact communication cost accounting ($Q$).
+- AESW adaptive mode controller (`AdaptiveModeController`), $W$-step sliding information history, stagnation counter ($S(t)$), and dynamic switching between `SearchMode.LOCAL` and `SearchMode.LONG_JUMP`.
+- AESW next-hop decision engine (`NextHopDecisionEngine`), multi-factor candidate scoring ($S = aP + bN - gR - dD$), numerically stabilized softmax action selection ($P_{\text{select}}(u) = \exp((S(u) - S_{\max})/T) / Z$), and explainable decision records (`CandidateScore`, `NextHopDecision`).
 
 ---
 
@@ -268,5 +275,10 @@ Current implementation includes:
 - **Baseline Search Algorithms**: Six standardized search policies (Random Walk, Non-Backtracking, $k$-RW, Degree-Based, Flooding, Ant Colony) with observation-bounded action validation and isolated PRNG streams.
 - **Experimental Harness & Simulation Coordinator**: Discrete-time simulation coordinator, immutable `ExperimentInstance` generation, exact fair comparison across all baselines, cross-seed benchmark automation, and structured JSON artifact generation.
 - **AESW Evidence Memory & Adaptive Exponential Decay**: Structured evidence representation, exponential decay weighting ($w = \exp(-\hat{\lambda} \cdot \text{age})$), half-life formulations, positive and negative evidence polarities, local node-level memory cache (`EvidenceCache`), timestamp-prioritized update rules, and observation ingestion.
+- **AESW Online Churn Estimator**: Local observation-based Jaccard overlap, instantaneous turnover estimation, smoothed dynamic graph volatility $\hat{\lambda}$, zero leakage of hidden transition parameters, and seamless parameterization of evidence memory decay.
+- **AESW Node-Mediated Communication**: Decentralized vertex-anchored shared caches, strict absence of direct peer-to-peer links, formal communication modes, received evidence provenance tracking, and rigorous communication cost accounting ($Q$).
+- **AESW Adaptive Mode Controller**: Information-gain driven transitions between local exploitation (`LOCAL`) and global dispersion (`LONG_JUMP`), bounded sliding window $W$, consecutive stagnation tracking, and automatic recovery upon novel positive cues.
+- **AESW Next-Hop Decision Engine**: Multi-criteria candidate scoring trading off positive evidence ($P$), novelty ($N$), revisit penalty ($R$), and traversal delay ($D$); numerically stabilized Boltzmann softmax action selection; observation candidate pruning; mode integration; and isolated PRNG sampling.
+
 
 
