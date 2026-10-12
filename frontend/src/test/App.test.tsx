@@ -326,13 +326,72 @@ describe('AESW Research Workstation Frontend', () => {
     });
   });
 
-  it('10. Non-AESW algorithm adapts UI to baseline inspector without crashing', async () => {
+  it('10. Non-AESW algorithm adapts UI to baseline inspector and renders candidate ranking when stepped', async () => {
     const nonAeswSim = {
       ...sampleSimulation,
       algorithm: 'random_walk',
       is_aesw: false,
     };
+    const baselineDecisions = [
+      {
+        walker_id: 0,
+        time: 1,
+        current_node: 0,
+        mode: 'BASELINE',
+        estimated_lambda: 0.0,
+        stagnation_steps: 0,
+        selected_node: 1,
+        action_type: 'MOVE',
+        destination: 1,
+        candidate_scores: [
+          {
+            node_id: 1,
+            positive_evidence: 0.0,
+            novelty: 0.0,
+            revisit_penalty: 0.0,
+            delay: 1.0,
+            total_score: 1.0,
+            probability: 0.5,
+          },
+          {
+            node_id: 2,
+            positive_evidence: 0.0,
+            novelty: 0.0,
+            revisit_penalty: 0.0,
+            delay: 1.0,
+            total_score: 1.0,
+            probability: 0.5,
+          },
+        ],
+      },
+    ];
+    const baselineWalkers = [
+      {
+        walker_id: 0,
+        current_node: 1,
+        step_count: 1,
+        message_count: 0,
+        mode: 'BASELINE',
+        estimated_lambda: 0.0,
+        stagnation_steps: 0,
+        recent_action: 'MOVE',
+        recent_destination: 1,
+        visit_counts: { '0': 1, '1': 1 },
+        latest_decision: baselineDecisions[0],
+      },
+    ];
     vi.mocked(api.createSimulation).mockResolvedValue(nonAeswSim);
+    vi.mocked(api.getSimulationDecisions).mockResolvedValue(baselineDecisions);
+    vi.mocked(api.getSimulationWalkers).mockResolvedValue(baselineWalkers);
+    vi.mocked(api.stepSimulation).mockResolvedValue({
+      simulation_id: 'test-sim-123',
+      time: 1,
+      is_terminated: false,
+      termination_status: null,
+      metrics: { ...sampleSimulation.metrics, search_time: 1, total_moves: 1 },
+      walkers: baselineWalkers,
+      latest_decisions: baselineDecisions,
+    });
 
     render(<App />);
     const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
@@ -341,6 +400,17 @@ describe('AESW Research Workstation Frontend', () => {
     await waitFor(() => {
       expect(screen.getByText(/Algorithm Inspector/i)).toBeInTheDocument();
       expect(screen.getByText(/Unbiased Random Walk Policy/i)).toBeInTheDocument();
+      expect(screen.getByText(/Observed Neighbor Inspection/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/50.0%/i).length).toBeGreaterThan(0);
+    });
+
+    // Check Walker Activity tab displays baseline data
+    const activityTab = screen.getByRole('button', { name: /Walker Activity/i });
+    fireEvent.click(activityTab);
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Walker #0/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByText(/BASELINE/i).length).toBeGreaterThan(0);
     });
   });
 

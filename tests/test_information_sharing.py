@@ -523,3 +523,62 @@ class TestAuxiliaryAndEdgeCases:
         exchange.reset()
         assert exchange.total_messages == 0
         assert not exchange.has_node_cache(1)
+
+
+class TestPerWalkerMessageAttribution:
+    """Regression tests verifying per-walker message attribution and conservation."""
+
+    def test_coordinator_record_messages_attribution(self) -> None:
+        """Test SimulationCoordinator accurately tracks messages per-walker and preserves total Q."""
+        from aesw.environment.coordinator import SimulationCoordinator
+        from aesw.environment.problem import ProblemDefinition
+        from aesw.graph.generators import generate_erdos_renyi
+
+        graph = generate_erdos_renyi(n=10, p=0.4, seed=42)
+        problem_def = ProblemDefinition()
+        coordinator = SimulationCoordinator(
+            problem_def=problem_def,
+            static_graph=graph,
+            initial_target_node=9,
+            initial_walker_nodes={0: 0, 1: 1, 2: 2},
+        )
+
+        # Initially all message counts are 0
+        assert coordinator.total_messages == 0
+        for w_id in range(3):
+            assert coordinator.walker_states[w_id].message_count == 0
+
+        # Walker 0 records 2 messages (e.g. PUSH + PULL)
+        coordinator.record_messages(count=2, walker_id=0)
+        assert coordinator.total_messages == 2
+        assert coordinator.walker_states[0].message_count == 2
+        assert coordinator.walker_states[1].message_count == 0
+        assert coordinator.walker_states[2].message_count == 0
+
+        # Walker 1 records 1 message (e.g. PUSH only)
+        coordinator.record_messages(count=1, walker_id=1)
+        assert coordinator.total_messages == 3
+        assert coordinator.walker_states[0].message_count == 2
+        assert coordinator.walker_states[1].message_count == 1
+        assert coordinator.walker_states[2].message_count == 0
+
+        # Walker 2 has no communication and retains 0
+        # Global Q matches sum of attributable walker messages
+        sum_walker_msgs = sum(w.message_count for w in coordinator.walker_states.values())
+        assert sum_walker_msgs == coordinator.total_messages == 3
+
+        # Unattributed messages (walker_id=None) increase total_messages without altering individual walkers
+        coordinator.record_messages(count=5, walker_id=None)
+        assert coordinator.total_messages == 8
+        assert coordinator.walker_states[0].message_count == 2
+        assert coordinator.walker_states[1].message_count == 1
+        assert coordinator.walker_states[2].message_count == 0
+
+        # Unknown walker ID increases total_messages safely without throwing
+        coordinator.record_messages(count=2, walker_id="unknown_walker")
+        assert coordinator.total_messages == 10
+        assert coordinator.walker_states[0].message_count == 2
+
+        # Negative count raises ValueError
+        with pytest.raises(ValueError):
+            coordinator.record_messages(-1, walker_id=0)

@@ -8,7 +8,7 @@ and evaluation metrics collection under strict epistemic boundaries.
 
 from __future__ import annotations
 
-from typing import Mapping, Optional, Sequence
+from typing import Mapping, Optional, Sequence, Union
 import numpy as np
 
 from aesw.environment.types import (
@@ -187,15 +187,26 @@ class SimulationCoordinator:
         """Total messages Q exchanged across all walkers."""
         return self._total_messages
 
-    def record_messages(self, count: int) -> None:
+    def record_messages(self, count: int, walker_id: Optional[Union[int, str]] = None) -> None:
         """Record communication message overhead Q incurred by search policies.
 
         Args:
             count: Number of messages to add to cumulative Q.
+            walker_id: Optional ID of the specific walker responsible for the messages.
         """
         if count < 0:
             raise ValueError(f"Message count must be non-negative, got {count}")
         self._total_messages += int(count)
+
+        if walker_id is not None and walker_id in self._walker_states:
+            w_state = self._walker_states[walker_id]
+            self._walker_states[walker_id] = WalkerState(
+                walker_id=w_state.walker_id,
+                current_node=w_state.current_node,
+                step_count=w_state.step_count,
+                message_count=w_state.message_count + int(count),
+                busy_until_time=w_state.busy_until_time,
+            )
 
     @property
     def walker_trajectories(self) -> Mapping[int, tuple[int | str, ...]]:
@@ -376,6 +387,7 @@ class SimulationCoordinator:
 
 
         if self._termination_status == SearchTerminationStatus.SUCCESS:
+            self._time += 1
             return self.get_observations(), True, SearchTerminationStatus.SUCCESS
 
         # 3. Advance dynamic environment

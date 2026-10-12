@@ -100,7 +100,19 @@ class SimulationSession:
         self.coordinator: SimulationCoordinator = self.experiment.create_coordinator()
         self.is_aesw = False
         self.policy: Optional[Union[AESWPolicy, IndependentRandomWalkers, Dict[int, BaselinePolicy]]] = None
+        self._processed_comm_event_index = 0
         self._init_policy()
+
+    def _sync_communication(self) -> None:
+        """Synchronize node-mediated communication events to coordinator per-walker counters."""
+        if not (self.is_aesw and isinstance(self.policy, AESWPolicy)):
+            return
+        events = self.policy.exchange.metrics.events
+        if len(events) > self._processed_comm_event_index:
+            new_events = events[self._processed_comm_event_index:]
+            for ev in new_events:
+                self.coordinator.record_messages(count=ev.message_cost, walker_id=ev.walker_id)
+            self._processed_comm_event_index = len(events)
 
     def _compute_stable_layout(self) -> Dict[Union[int, str], tuple[float, float]]:
         """Compute stable 2D node coordinates in range [-1.0, 1.0]."""
@@ -259,25 +271,170 @@ class SimulationSession:
                     })
 
                 # Sync communication messages
-                msg_diff = self.policy.total_messages - self.coordinator.total_messages
-                if msg_diff > 0:
-                    self.coordinator.record_messages(msg_diff)
+                self._sync_communication()
 
             elif isinstance(self.policy, IndependentRandomWalkers):
                 actions = self.policy.decide_all(observations)
+                t = self.coordinator.time
+                for w_id, obs in observations.items():
+                    act = actions.get(w_id)
+                    candidates = self.policy.get_available_candidates(obs)
+                    prob = 1.0 / len(candidates) if candidates else 0.0
+                    c_scores = [
+                        CandidateScoreDto(
+                            node_id=c_id,
+                            positive_evidence=0.0,
+                            novelty=0.0,
+                            revisit_penalty=0.0,
+                            delay=1.0,
+                            total_score=1.0,
+                            probability=float(prob),
+                        )
+                        for c_id in candidates
+                    ]
+                    self._latest_decisions[w_id] = DecisionTraceDto(
+                        walker_id=w_id,
+                        time=t,
+                        current_node=obs.current_node,
+                        mode="BASELINE",
+                        estimated_lambda=0.0,
+                        stagnation_steps=0,
+                        selected_node=act.destination if act and act.action_type.value == "move" else None,
+                        action_type=act.action_type.value if act else "UNKNOWN",
+                        destination=act.destination if act else None,
+                        candidate_scores=c_scores,
+                    )
+
             elif isinstance(self.policy, dict):
+                t = self.coordinator.time
                 for w_id, obs in observations.items():
                     if w_id in self.policy:
-                        actions[w_id] = self.policy[w_id].decide(obs)
+                        pol = self.policy[w_id]
+                        act = pol.decide(obs)
+                        actions[w_id] = act
+
+                        candidates = pol.get_available_candidates(obs) if hasattr(pol, "get_available_candidates") else []
+                        c_scores: List[CandidateScoreDto] = []
+
+                        # Extract policy-specific candidate metrics
+                        if pol.baseline_type.value == "random_walk":
+                            prob = 1.0 / len(candidates) if candidates else 0.0
+                            for c_id in candidates:
+                                c_scores.append(
+                                    CandidateScoreDto(
+                                        node_id=c_id,
+                                        positive_evidence=0.0,
+                                        novelty=0.0,
+                                        revisit_penalty=0.0,
+                                        delay=1.0,
+                                        total_score=1.0,
+                                        probability=float(prob),
+                                    )
+                                )
+                        elif pol.baseline_type.value == "non_backtracking":
+                            prev_n = getattr(pol, "_previous_node", None)
+                            nb_candidates = [n for n in candidates if n != prev_n]
+                            eligible = nb_candidates if nb_candidates else candidates
+                            prob = 1.0 / len(eligible) if eligible else 0.0
+                            for c_id in candidates:
+                                is_eligible = c_id in eligible
+                                c_scores.append(
+                                    CandidateScoreDto(
+                                        node_id=c_id,
+                                        positive_evidence=0.0,
+                                        novelty=1.0 if c_id != prev_n else 0.0,
+                                        revisit_penalty=1.0 if c_id == prev_n else 0.0,
+                                        delay=1.0,
+                                        total_score=1.0 if is_eligible else 0.0,
+                                        probability=float(prob if is_eligible else 0.0),
+                                    )
+                                )
+                        elif pol.baseline_type.value == "degree_based":
+                            scores_map = act.metadata.get("candidate_scores", {}) if act and act.metadata else {}
+                            total_s = sum(scores_map.values()) if scores_map else 0.0
+                            for c_id in candidates:
+                                deg_score = float(scores_map.get(c_id, getattr(pol, "_default_prior", 1.0)))
+                                prob = deg_score / total_s if total_s > 0 else (1.0 / len(candidates) if candidates else 0.0)
+                                c_scores.append(
+                                    CandidateScoreDto(
+                                        node_id=c_id,
+                                        positive_evidence=0.0,
+                                        novelty=deg_score,
+                                        revisit_penalty=0.0,
+                                        delay=1.0,
+                                        total_score=deg_score,
+                                        probability=float(prob),
+                                    )
+                                )
+                        elif pol.baseline_type.value == "ant_colony":
+                            prob_map = act.metadata.get("candidate_probabilities", {}) if act and act.metadata else {}
+                            for c_id in candidates:
+                                p_val = float(prob_map.get(c_id, 1.0 / len(candidates) if candidates else 0.0))
+                                tau = float(pol.get_pheromone(obs.current_node, c_id)) if hasattr(pol, "get_pheromone") else 1.0
+                                c_scores.append(
+                                    CandidateScoreDto(
+                                        node_id=c_id,
+                                        positive_evidence=tau,
+                                        novelty=0.0,
+                                        revisit_penalty=0.0,
+                                        delay=1.0,
+                                        total_score=tau,
+                                        probability=p_val,
+                                    )
+                                )
+                        elif pol.baseline_type.value == "flooding":
+                            visited_set = getattr(pol, "_visited_nodes", set())
+                            unvis = [n for n in candidates if n not in visited_set]
+                            eligible = unvis if unvis else candidates
+                            prob = 1.0 / len(eligible) if eligible else 0.0
+                            for c_id in candidates:
+                                is_unvis = c_id not in visited_set
+                                is_el = c_id in eligible
+                                c_scores.append(
+                                    CandidateScoreDto(
+                                        node_id=c_id,
+                                        positive_evidence=0.0,
+                                        novelty=1.0 if is_unvis else 0.0,
+                                        revisit_penalty=1.0 if not is_unvis else 0.0,
+                                        delay=1.0,
+                                        total_score=1.0 if is_el else 0.0,
+                                        probability=float(prob if is_el else 0.0),
+                                    )
+                                )
+                        else:
+                            prob = 1.0 / len(candidates) if candidates else 0.0
+                            for c_id in candidates:
+                                c_scores.append(
+                                    CandidateScoreDto(
+                                        node_id=c_id,
+                                        positive_evidence=0.0,
+                                        novelty=0.0,
+                                        revisit_penalty=0.0,
+                                        delay=1.0,
+                                        total_score=1.0,
+                                        probability=float(prob),
+                                    )
+                                )
+
+                        self._latest_decisions[w_id] = DecisionTraceDto(
+                            walker_id=w_id,
+                            time=t,
+                            current_node=obs.current_node,
+                            mode="BASELINE",
+                            estimated_lambda=0.0,
+                            stagnation_steps=0,
+                            selected_node=act.destination if act and act.action_type.value == "move" else None,
+                            action_type=act.action_type.value if act else "UNKNOWN",
+                            destination=act.destination if act else None,
+                            candidate_scores=c_scores,
+                        )
 
             # Step environment coordinator
             self.coordinator.step(actions)
 
             # Sync communication messages again if any
             if self.is_aesw and isinstance(self.policy, AESWPolicy):
-                msg_diff = self.policy.total_messages - self.coordinator.total_messages
-                if msg_diff > 0:
-                    self.coordinator.record_messages(msg_diff)
+                self._sync_communication()
 
             is_term = self.coordinator.is_terminated
             term_status = (
@@ -305,6 +462,7 @@ class SimulationSession:
             }
             self._latest_decisions.clear()
             self._previous_edge_states.clear()
+            self._processed_comm_event_index = 0
             self._init_policy()
 
             return self.get_status()
@@ -464,6 +622,14 @@ class SimulationSession:
                     est_lambda = float(agent.churn_estimator.estimated_lambda)
                     stagnation = int(agent.mode_controller.stagnation_steps)
                     visit_counts_str = {str(k): v for k, v in agent.visit_counts.items()}
+                else:
+                    mode = "BASELINE"
+                    traj = self.coordinator.walker_trajectories.get(w_id, ())
+                    counts: Dict[str, int] = {}
+                    for node in traj:
+                        node_str = str(node)
+                        counts[node_str] = counts.get(node_str, 0) + 1
+                    visit_counts_str = counts
 
                 states_list.append(
                     WalkerStateDto(

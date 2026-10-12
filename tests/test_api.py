@@ -279,3 +279,157 @@ def test_simulation_status_lifecycle_regression(client):
     assert succ_res["metrics"]["status"] == "SUCCESS"
     assert succ_res["metrics"]["success"] is True
 
+
+def test_per_walker_message_counter_and_cost_conservation(client):
+    """Test per-walker message attribution, sum conservation, and unchanged global Q cost."""
+    # 1. Test AESW with PUSH_PULL: active walkers generate communication events
+    payload = {
+        "algorithm": "aesw",
+        "graph_type": "er",
+        "num_nodes": 20,
+        "graph_parameters": {"p": 0.3},
+        "walker_count": 3,
+        "seed": 101,
+        "time_horizon": 20,
+        "communication_mode": "PUSH_PULL",
+        "c_m": 0.5,
+    }
+    create_res = client.post("/api/simulations", json=payload)
+    assert create_res.status_code == 201
+    sim_id = create_res.json()["simulation_id"]
+
+    # At step 0, message count for all walkers is 0
+    sim_status = client.get(f"/api/simulations/{sim_id}").json()
+    assert sim_status["metrics"]["total_messages"] == 0
+    assert sim_status["metrics"]["total_moves"] == 0
+    assert sim_status["metrics"]["total_cost"] == 0.0
+
+    # Advance 3 steps
+    for _ in range(3):
+        step_res = client.post(f"/api/simulations/{sim_id}/step")
+        assert step_res.status_code == 200
+        step_data = step_res.json()
+        if step_data["is_terminated"]:
+            break
+
+    # Inspect walkers and metrics
+    step_data = client.post(f"/api/simulations/{sim_id}/step").json()
+    metrics = step_data["metrics"]
+    walkers = step_data["walkers"]
+    assert len(walkers) == 3
+
+    # Verify per-walker message attribution:
+    # Walkers performing PUSH and PULL should have positive message counts
+    per_walker_counts = [w["message_count"] for w in walkers]
+    total_walker_messages = sum(per_walker_counts)
+
+    # In AESW PUSH_PULL, walkers push/pull each step, so message counts > 0
+    assert total_walker_messages > 0
+    assert any(c > 0 for c in per_walker_counts)
+
+    # Invariance check: sum of per-walker counts strictly matches global Q
+    assert total_walker_messages == metrics["total_messages"]
+
+    # Verify cost conservation equation: C = M + c_m * Q
+    expected_cost = metrics["total_moves"] + 0.5 * metrics["total_messages"]
+    assert abs(metrics["total_cost"] - expected_cost) < 1e-6
+
+    # 2. Test baseline with NO communication (e.g., random_walk)
+    baseline_payload = {
+        "algorithm": "random_walk",
+        "graph_type": "er",
+        "num_nodes": 20,
+        "graph_parameters": {"p": 0.3},
+        "walker_count": 2,
+        "seed": 102,
+        "time_horizon": 10,
+        "c_m": 0.5,
+    }
+    b_res = client.post("/api/simulations", json=baseline_payload).json()
+    b_id = b_res["simulation_id"]
+    b_step = client.post(f"/api/simulations/{b_id}/step").json()
+    assert b_step["metrics"]["total_messages"] == 0
+    assert b_step["metrics"]["total_cost"] == b_step["metrics"]["total_moves"]
+
+
+def test_baseline_walker_activity_and_decisions(client):
+    """Test that baseline runs serialize truthful actions, destinations, visit counts, and decision traces."""
+    for algo in ["random_walk", "degree", "ant_colony", "flooding", "non_backtracking"]:
+        payload = {
+            "algorithm": algo,
+            "graph_type": "er",
+            "num_nodes": 20,
+            "graph_parameters": {"p": 0.25},
+            "walker_count": 2,
+            "seed": 42,
+            "time_horizon": 10,
+        }
+        res = client.post("/api/simulations", json=payload)
+        assert res.status_code == 201
+        sim_id = res.json()["simulation_id"]
+
+        # Before stepping: visit counts have initial node
+        init_walkers = client.get(f"/api/simulations/{sim_id}/walkers").json()
+        assert len(init_walkers) == 2
+        for w in init_walkers:
+            assert len(w["visit_counts"]) == 1
+            assert w["recent_action"] is None
+            assert w["recent_destination"] is None
+
+        # Execute 1 step
+        step_res = client.post(f"/api/simulations/{sim_id}/step").json()
+        walkers = step_res["walkers"]
+        decisions = step_res["latest_decisions"]
+
+        assert len(walkers) == 2
+        assert len(decisions) == 2
+
+        for w, dec in zip(walkers, decisions):
+            # Verify walker activity fields
+            assert w["mode"] == "BASELINE"
+            assert w["recent_action"] in ["move", "stay"]
+            assert len(w["visit_counts"]) >= 1
+            assert sum(w["visit_counts"].values()) == w["step_count"] + 1
+
+            # Verify decision trace truthful alignment with action
+            assert dec["walker_id"] == w["walker_id"]
+            assert dec["action_type"] == w["recent_action"]
+            assert dec["destination"] == w["recent_destination"]
+            assert dec["mode"] == "BASELINE"
+            assert dec["estimated_lambda"] == 0.0
+
+            # Verify candidate inspection table data
+            if w["recent_action"] == "move":
+                assert len(dec["candidate_scores"]) > 0
+                selected_cands = [c for c in dec["candidate_scores"] if c["node_id"] == dec["selected_node"]]
+                assert len(selected_cands) == 1
+                # Selection probabilities sum to 1.0 (or within precision)
+                prob_sum = sum(c["probability"] for c in dec["candidate_scores"])
+                assert abs(prob_sum - 1.0) < 1e-4
+
+
+def test_baseline_trajectory_persistence(client):
+    """Test that baseline trajectories persist complete histories across multiple steps."""
+    payload = {
+        "algorithm": "random_walk",
+        "graph_type": "er",
+        "num_nodes": 20,
+        "graph_parameters": {"p": 0.3},
+        "walker_count": 2,
+        "seed": 77,
+        "time_horizon": 10,
+    }
+    res = client.post("/api/simulations", json=payload).json()
+    sim_id = res["simulation_id"]
+
+    for _ in range(3):
+        st = client.post(f"/api/simulations/{sim_id}/step").json()
+        if st["is_terminated"]:
+            break
+
+    traj_data = client.get(f"/api/simulations/{sim_id}/trajectory").json()
+    assert len(traj_data["target_trajectory"]) >= 2
+    assert len(traj_data["walker_trajectories"]) == 2
+    for w_id in ["0", "1"]:
+        assert len(traj_data["walker_trajectories"][w_id]) >= 2
+

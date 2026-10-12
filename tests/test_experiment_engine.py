@@ -136,6 +136,78 @@ def test_simulation_coordinator_immediate_acquisition():
     assert metrics.search_time == 0
 
 
+def test_simulation_coordinator_step_acquisition_time_accounting():
+    """Verify coordinator increments time to 1 when acquisition occurs during the first step."""
+    g_spec = GraphSpecification(graph_type="er", num_nodes=10, seed=42, parameters={"p": 0.5})
+    graph = generate_graph(g_spec, seed=42)
+    p_def = ProblemDefinition(graph=g_spec)
+
+    # Place walker 0 and walker 1 at nodes 0 and 1; target at adjacent node 2
+    coord = SimulationCoordinator(
+        problem_def=p_def,
+        static_graph=graph,
+        initial_target_node=2,
+        initial_walker_nodes={0: 0, 1: 1},
+    )
+
+    # Initial state before any step
+    assert coord.time == 0
+    assert not coord.is_terminated
+    assert coord.total_moves == 0
+
+    # Walker 0 moves onto target node 2; Walker 1 moves to node 3
+    action0 = SearchAction(action_type=ActionType.MOVE, destination=2)
+    action1 = SearchAction(action_type=ActionType.MOVE, destination=3)
+    obs, is_term, status = coord.step({0: action0, 1: action1})
+
+    assert is_term is True
+    assert status == SearchTerminationStatus.SUCCESS
+    assert coord.time == 1
+    assert coord.total_moves == 2
+    metrics = coord.get_run_metrics(algorithm_name="test", seed=42)
+    assert metrics.search_time == 1
+    assert metrics.success is True
+    assert metrics.total_moves == 2
+
+
+def test_simulation_coordinator_nonterminal_and_post_terminal_time_accounting():
+    """Verify nonterminal steps increment time exactly once and post-terminal steps do not increment time."""
+    g_spec = GraphSpecification(graph_type="er", num_nodes=10, seed=42, parameters={"p": 0.5})
+    graph = generate_graph(g_spec, seed=42)
+    p_def = ProblemDefinition(graph=g_spec)
+
+    coord = SimulationCoordinator(
+        problem_def=p_def,
+        static_graph=graph,
+        initial_target_node=9,
+        initial_walker_nodes={0: 0},
+    )
+
+    # Step 1: STAY action (nonterminal)
+    obs1, term1, status1 = coord.step({0: SearchAction(action_type=ActionType.STAY)})
+    assert term1 is False
+    assert coord.time == 1
+
+    # Step 2: STAY action (nonterminal)
+    obs2, term2, status2 = coord.step({0: SearchAction(action_type=ActionType.STAY)})
+    assert term2 is False
+    assert coord.time == 2
+
+    # Step 3: MOVE to target 9 (terminal acquisition)
+    # Ensure edge exists or use jump/move
+    target_node = coord.target_state.current_node
+    obs3, term3, status3 = coord.step({0: SearchAction(action_type=ActionType.MOVE, destination=target_node)})
+    assert term3 is True
+    assert status3 == SearchTerminationStatus.SUCCESS
+    assert coord.time == 3
+
+    # Subsequent call on terminated coordinator must not increment clock again
+    obs_post, term_post, status_post = coord.step({0: SearchAction(action_type=ActionType.STAY)})
+    assert term_post is True
+    assert status_post == SearchTerminationStatus.SUCCESS
+    assert coord.time == 3
+
+
 def test_simulation_coordinator_budget_exhaustion():
     """Verify coordinator terminates with BUDGET_EXHAUSTED when time horizon is reached."""
     g_spec = GraphSpecification(graph_type="er", num_nodes=10, seed=42, parameters={"p": 0.3})

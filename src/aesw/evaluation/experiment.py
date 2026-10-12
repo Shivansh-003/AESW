@@ -579,7 +579,11 @@ def run_experiment(
 
     # Synchronize communication messages Q from multi-walker policy if applicable
     if multi_walker_policy is not None and hasattr(multi_walker_policy, "total_messages"):
-        coordinator.record_messages(multi_walker_policy.total_messages)
+        if hasattr(multi_walker_policy, "exchange") and hasattr(multi_walker_policy.exchange, "metrics"):
+            for ev in multi_walker_policy.exchange.metrics.events:
+                coordinator.record_messages(count=ev.message_cost, walker_id=ev.walker_id)
+        else:
+            coordinator.record_messages(multi_walker_policy.total_messages)
 
     # Extract diagnostic decision traces if supported
     traces = None
