@@ -754,4 +754,51 @@ describe('AESW Research Workstation Frontend', () => {
       );
     });
   });
+
+  it('19. Switching to 2D Grid passes correct parameters without hardcoded rows and cols', async () => {
+    render(<App />);
+
+    // Switch graph type to 2D Grid
+    const graphSelect = screen.getAllByRole('combobox')[1]; // graph family select
+    fireEvent.change(graphSelect, { target: { value: 'grid' } });
+
+    // Submit configuration
+    const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
+    fireEvent.click(genButton);
+
+    await waitFor(() => {
+      expect(api.createSimulation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          graph_type: 'grid',
+          graph_parameters: { obstacle_ratio: 0.1 },
+        })
+      );
+    });
+  });
+
+  it('20. Switching to RGG submits radius 0.28 without step mismatch', async () => {
+    render(<App />);
+
+    // Switch graph type to RGG
+    const graphSelect = screen.getAllByRole('combobox')[1];
+    fireEvent.change(graphSelect, { target: { value: 'rgg' } });
+
+    const radiusInput = screen.getByDisplayValue('0.28');
+    expect(radiusInput).toBeInTheDocument();
+    expect(radiusInput).toHaveAttribute('step', '0.01');
+    expect(radiusInput).toHaveAttribute('min', '0.01');
+
+    // Submit configuration
+    const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
+    fireEvent.click(genButton);
+
+    await waitFor(() => {
+      expect(api.createSimulation).toHaveBeenCalledWith(
+        expect.objectContaining({
+          graph_type: 'rgg',
+          graph_parameters: { radius: 0.28 },
+        })
+      );
+    });
+  });
 });

@@ -53,19 +53,36 @@ def generate_graph(
         return generate_watts_strogatz(n=spec.num_nodes, k=k, p=p, seed=actual_seed)
 
     elif raw_type in ("grid", "grid_obstacle"):
-        rows = int(params.get("rows", 10))
-        cols = int(params.get("cols", 10))
         obstacle_ratio = float(params.get("obstacle_ratio", 0.1))
         allow_diagonal = bool(params.get("allow_diagonal", False))
         obstacle_mask = params.get("obstacle_mask", None)
-        return generate_grid_with_obstacles(
-            rows=rows,
-            cols=cols,
-            obstacle_ratio=obstacle_ratio,
-            obstacle_mask=obstacle_mask,
-            allow_diagonal=allow_diagonal,
-            seed=actual_seed,
-        )
+
+        # If explicit rows and cols are provided, respect them unless only num_nodes was specified
+        has_explicit_dims = "rows" in params and "cols" in params
+        if has_explicit_dims:
+            rows = int(params["rows"])
+            cols = int(params["cols"])
+            # If explicit rows and cols are given, check if n was also intended or if dimensions govern
+            return generate_grid_with_obstacles(
+                rows=rows,
+                cols=cols,
+                obstacle_ratio=obstacle_ratio,
+                obstacle_mask=obstacle_mask,
+                allow_diagonal=allow_diagonal,
+                seed=actual_seed,
+            )
+        else:
+            rows = int(params["rows"]) if "rows" in params else None
+            cols = int(params["cols"]) if "cols" in params else None
+            return generate_grid_with_obstacles(
+                rows=rows,
+                cols=cols,
+                obstacle_ratio=obstacle_ratio,
+                obstacle_mask=obstacle_mask,
+                allow_diagonal=allow_diagonal,
+                seed=actual_seed,
+                n=spec.num_nodes,
+            )
 
     elif raw_type in ("random_geometric", "rgg"):
         radius = float(params.get("radius", 0.2))

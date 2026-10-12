@@ -13,6 +13,7 @@ import math
 import pytest
 import networkx as nx
 
+from aesw.environment.problem import GraphSpecification
 from aesw.graph.types import GraphType
 from aesw.graph.base import GraphInstance
 from aesw.graph.generators import (
@@ -24,7 +25,6 @@ from aesw.graph.generators import (
 )
 from aesw.graph.factory import generate_graph, generate_graph_by_family
 from aesw.graph.adapters import TemporalGraphSource
-from aesw.environment.problem import GraphSpecification
 
 
 # ==========================================
@@ -222,6 +222,34 @@ def test_grid_determinism():
     assert set(g1.node_ids) != set(g3.node_ids)
 
 
+def test_grid_with_exact_target_node_count():
+    """Verify grid generation with exact target node count n produces exactly n nodes."""
+    # Requested 30 nodes with obstacle ratio 0.1 and seed 42
+    g = generate_grid_with_obstacles(n=30, obstacle_ratio=0.1, seed=42)
+    assert g.node_count == 30
+    assert g.metadata.extra["num_obstacles"] == 5
+    # Dimensions derived: rows=5, cols=7 => total 35 cells, 5 obstacles, 30 active nodes
+    assert g.metadata.generation_parameters["rows"] == 5
+    assert g.metadata.generation_parameters["cols"] == 7
+    assert g.metadata.generation_parameters["n"] == 30
+    assert len(g.nodes) == 30
+
+    # Test across multiple target counts
+    for target_n in [4, 10, 25, 50, 100]:
+        g_n = generate_grid_with_obstacles(n=target_n, obstacle_ratio=0.1, seed=42)
+        assert g_n.node_count == target_n
+        assert len(g_n.nodes) == target_n
+
+
+def test_grid_factory_with_num_nodes_and_no_explicit_dimensions():
+    """Verify factory generation with graph_type='grid' and num_nodes=30 yields 30 nodes."""
+    spec = GraphSpecification(graph_type="grid", num_nodes=30, seed=42, parameters={"obstacle_ratio": 0.1})
+    g = generate_graph(spec)
+    assert g.node_count == 30
+    assert g.graph_type == GraphType.GRID_OBSTACLE
+    assert len(g.nodes) == 30
+
+
 # ==========================================
 # E. Random Geometric Graph Tests
 # ==========================================
@@ -240,6 +268,19 @@ def test_random_geometric_valid_generation():
         assert len(pos) == 2
         assert 0.0 <= pos[0] <= 1.0
         assert 0.0 <= pos[1] <= 1.0
+
+
+def test_random_geometric_radius_028():
+    """Verify RGG generates correctly with radius 0.28 (default UI parameter)."""
+    g = generate_random_geometric(n=30, radius=0.28, seed=42)
+    assert g.graph_type == GraphType.RANDOM_GEOMETRIC
+    assert g.node_count == 30
+    assert g.edge_count > 0
+    for edge in g.edges:
+        pos_u = g.nodes[edge.source].metadata["pos"]
+        pos_v = g.nodes[edge.target].metadata["pos"]
+        dist = math.dist(pos_u, pos_v)
+        assert dist <= 0.28 + 1e-6
 
 
 def test_random_geometric_euclidean_distance_invariant():

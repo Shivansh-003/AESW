@@ -433,3 +433,43 @@ def test_baseline_trajectory_persistence(client):
     for w_id in ["0", "1"]:
         assert len(traj_data["walker_trajectories"][w_id]) >= 2
 
+
+def test_create_grid_simulation_exact_node_count(client):
+    """Regression test: creating 2D grid simulation with num_nodes=30 returns exactly 30 nodes."""
+    payload = {
+        "algorithm": "aesw",
+        "graph_type": "grid",
+        "num_nodes": 30,
+        "graph_parameters": {"obstacle_ratio": 0.1},
+        "walker_count": 3,
+        "seed": 42,
+    }
+    res = client.post("/api/simulations", json=payload)
+    assert res.status_code == 201
+    sim_id = res.json()["simulation_id"]
+
+    graph_res = client.get(f"/api/simulations/{sim_id}/graph")
+    assert graph_res.status_code == 200
+    g_data = graph_res.json()
+    assert len(g_data["nodes"]) == 30
+
+
+def test_create_rgg_simulation_default_radius(client):
+    """Regression test: creating RGG simulation with radius=0.28 returns 201 and valid graph."""
+    payload = {
+        "algorithm": "aesw",
+        "graph_type": "rgg",
+        "num_nodes": 30,
+        "graph_parameters": {"radius": 0.28},
+        "walker_count": 3,
+        "seed": 42,
+    }
+    res = client.post("/api/simulations", json=payload)
+    assert res.status_code == 201
+    sim_id = res.json()["simulation_id"]
+
+    graph_res = client.get(f"/api/simulations/{sim_id}/graph")
+    assert graph_res.status_code == 200
+    g_data = graph_res.json()
+    assert len(g_data["nodes"]) == 30
+

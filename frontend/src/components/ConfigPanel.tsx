@@ -110,7 +110,7 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({ onGenerate, loading, d
     if (gt === 'er') params = { p: 0.18 };
     else if (gt === 'ba') params = { m: 2 };
     else if (gt === 'ws') params = { k: 4, p: 0.1 };
-    else if (gt === 'grid') params = { rows: 6, cols: 6, obstacle_ratio: 0.1 };
+    else if (gt === 'grid') params = { obstacle_ratio: 0.1 };
     else if (gt === 'rgg') params = { radius: 0.28 };
 
     setConfig((prev) => ({
@@ -295,8 +295,8 @@ export const ConfigPanel: React.FC<ConfigPanelProps> = ({ onGenerate, loading, d
               <div className="flex items-center justify-between">
                 <span>Geometric Radius (r):</span>
                 <NumericInput
-                  step="0.02"
-                  min="0.05"
+                  step="0.01"
+                  min="0.01"
                   max="1.0"
                   value={config.graph_parameters?.radius ?? 0.28}
                   onChange={(val) =>

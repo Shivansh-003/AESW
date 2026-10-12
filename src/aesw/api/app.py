@@ -130,7 +130,7 @@ def create_app(manager: Optional[SimulationManager] = None) -> FastAPI:
                 id="grid",
                 name="2D Spatial Grid with Obstacles",
                 description="Square grid network with configurable dimensions and obstacle ratio.",
-                parameters={"rows": 6, "cols": 6, "obstacle_ratio": 0.1},
+                parameters={"obstacle_ratio": 0.1},
             ),
             GraphTypeInfo(
                 id="rgg",
