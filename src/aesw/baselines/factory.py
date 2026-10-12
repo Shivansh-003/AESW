@@ -14,7 +14,6 @@ from aesw.baselines.independent_walkers import IndependentRandomWalkers
 from aesw.baselines.degree_based import DegreeBasedWalkPolicy
 from aesw.baselines.flooding import FloodingPolicy
 from aesw.baselines.ant_colony import AntColonyWalkPolicy
-from aesw.aesw.agent import AESWPolicy
 
 
 def create_baseline(
@@ -84,6 +83,7 @@ def create_baseline(
         )
 
     elif b_type == BaselineType.AESW:
+        from aesw.aesw.agent import AESWPolicy
         k = kwargs.pop("k", 4)
         return AESWPolicy(k=k, seed=seed, **kwargs)
 

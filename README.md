@@ -128,9 +128,18 @@ adaptive-graph-search/
 │       ├── evaluation/         # Performance metrics, harness & benchmark runner
 │       │   ├── metrics.py      # RunMetrics, AggregatedMetrics, and CI computation
 │       │   └── experiment.py   # ExperimentInstance, run_experiment, run_benchmark
+│       ├── api/                # FastAPI application & interactive workstation API
+│       │   ├── models.py       # Pydantic schemas (GraphDto, WalkerStateDto, SimulationConfig)
+│       │   ├── simulation_manager.py # Thread-safe simulation sessions & NetworkX 2D layout
+│       │   └── app.py          # FastAPI application factory with REST endpoints
 │       └── utils/              # Configuration loaders and isolated RNG helpers
 │           ├── config.py
 │           └── reproducibility.py
+│
+├── frontend/                   # Interactive Research Workstation UI (React + TypeScript + Vite)
+│   ├── src/                    # Components (GraphExplorer, DecisionInspector, ConfigPanel, etc.)
+│   ├── package.json            # Frontend dependencies (Tailwind, Lucide, Recharts)
+│   └── vite.config.ts          # Vite build & test configuration
 │
 ├── experiments/                # Experiment runner scripts and benchmarks
 ├── scripts/                    # Utility scripts and dataset helpers
@@ -147,8 +156,9 @@ adaptive-graph-search/
 │   ├── test_churn_estimator.py # Online churn estimation and scientific coupling tests
 │   ├── test_information_sharing.py # Node-mediated information sharing & cost tests
 │   ├── test_mode_controller.py # Adaptive mode controller (LOCAL vs LONG_JUMP) tests
-│   └── test_next_hop_decision.py # Candidate scoring, softmax selection, and next-hop decision tests
-
+│   ├── test_next_hop_decision.py # Candidate scoring, softmax selection, and next-hop decision tests
+│   └── test_api.py             # FastAPI REST endpoints and simulation manager integration tests
+│
 ├── results/                    # Output directory for simulation data (.gitkeep)
 └── plots/                      # Output directory for generated figures (.gitkeep)
 
@@ -239,7 +249,7 @@ Run the automated test suite:
 python -m pytest -q
 ```
 
-All 320 tests verify:
+All 353 tests verify:
 - Package initialization and clean imports.
 - Configuration loading, schema parsing, and error handling.
 - Deterministic random number generation.
@@ -260,6 +270,25 @@ All 320 tests verify:
 - AESW node-mediated information sharing (`NodeMediatedExchange`, `SharedNodeCache`), communication modes (`NO_SHARING`, `PUSH`, `PULL`, `PUSH_PULL`), and exact communication cost accounting ($Q$).
 - AESW adaptive mode controller (`AdaptiveModeController`), $W$-step sliding information history, stagnation counter ($S(t)$), and dynamic switching between `SearchMode.LOCAL` and `SearchMode.LONG_JUMP`.
 - AESW next-hop decision engine (`NextHopDecisionEngine`), multi-factor candidate scoring ($S = aP + bN - gR - dD$), numerically stabilized softmax action selection ($P_{\text{select}}(u) = \exp((S(u) - S_{\max})/T) / Z$), and explainable decision records (`CandidateScore`, `NextHopDecision`).
+- REST API integration (`FastAPI`, `SimulationManager`, `SimulationSession`), session lifecycle, 2D coordinates generation, re-entrant locking, and endpoint state synchronization.
+
+---
+
+## 11. Interactive Research Workstation
+
+For live demonstrations and visual inspection of search trajectories, the framework includes an Interactive Research Workstation:
+
+- **Backend REST API**: Launch with `uvicorn aesw.api.app:app --host 127.0.0.1 --port 8000`
+- **Frontend SPA**: Launch with `cd frontend && npm run dev` (runs at `http://localhost:5173`)
+- **Key Features**:
+  - Interactive SVG dynamic graph visualization with pan/zoom/reset.
+  - Real-time active (solid) vs. inactive (dashed) dynamic edge transitions.
+  - Multi-walker tracking with mode indicators (`LOCAL` vs. `LONG_JUMP`).
+  - Explainable AESW decision scoring table with softmax probabilities ($P(u), N(u), R(u), D(u), S(u)$).
+  - Volatility ($\hat{\lambda}_t$), evidence cache, and trajectory analytics.
+  - Strict epistemic boundary: ground-truth target display is isolated to researcher view and never leaked to search agents.
+
+See [RESEARCH_WORKSTATION.md](docs/RESEARCH_WORKSTATION.md) for complete details.
 
 ---
 
