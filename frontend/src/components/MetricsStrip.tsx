@@ -5,9 +5,16 @@ import { CheckCircle2, AlertTriangle, XCircle, Footprints, RotateCcw, MapPin, Me
 interface MetricsStripProps {
   metrics: MetricsDto | null;
   totalNodes: number;
+  isAesw?: boolean;
+  algorithm?: string;
 }
 
-export const MetricsStrip: React.FC<MetricsStripProps> = ({ metrics, totalNodes }) => {
+export const MetricsStrip: React.FC<MetricsStripProps> = ({
+  metrics,
+  totalNodes,
+  isAesw,
+  algorithm,
+}) => {
   if (!metrics) {
     return (
       <div className="bg-graphite-900 border-b border-slate-800 px-5 py-2.5 text-xs text-slate-500 font-mono">
@@ -68,11 +75,30 @@ export const MetricsStrip: React.FC<MetricsStripProps> = ({ metrics, totalNodes 
         </div>
 
         {/* Messages Q */}
-        <div className="flex items-center gap-1.5 pr-3 border-r border-slate-800">
-          <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-          <span className="text-slate-400">Messages (Q):</span>
-          <span className="text-slate-100 font-bold">{metrics.total_messages}</span>
-        </div>
+        {(() => {
+          const effectiveAlgorithm = algorithm || metrics.algorithm;
+          const isCommunicationFree = isAesw === false || (effectiveAlgorithm && effectiveAlgorithm.toLowerCase() !== 'aesw');
+          const commTooltip = "Communication-free baseline — this algorithm does not exchange messages (Q = 0 by design).";
+
+          return (
+            <div
+              className="flex items-center gap-1.5 pr-3 border-r border-slate-800"
+              title={isCommunicationFree ? commTooltip : undefined}
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
+              <span className="text-slate-400">Messages (Q):</span>
+              <span className="text-slate-100 font-bold">{metrics.total_messages}</span>
+              {isCommunicationFree && (
+                <span
+                  className="text-slate-400 text-[10px] bg-slate-800/80 px-1.5 py-0.2 rounded border border-slate-700/60 cursor-help"
+                  title={commTooltip}
+                >
+                  No comm
+                </span>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Total Cost C = M + c_m Q */}
         <div className="flex items-center gap-1.5">

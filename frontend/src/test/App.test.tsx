@@ -322,6 +322,8 @@ describe('AESW Research Workstation Frontend', () => {
     await waitFor(() => {
       expect(screen.getByText(/AESW Decision Inspector/i)).toBeInTheDocument();
       expect(screen.getByText(/Active Neighbor Candidate Ranking/i)).toBeInTheDocument();
+      expect(screen.getByText('S(u) = 1.0·P(u) + 0.5·N(u) - 0.5·R(u) - 0.2·D(u)')).toBeInTheDocument();
+      expect(screen.getByTitle(/Scoring weights: α=1.0, β=0.5, γ=0.5, δ=0.2/i)).toBeInTheDocument();
       expect(screen.getByText(/85.0%/i)).toBeInTheDocument();
     });
   });
@@ -798,6 +800,133 @@ describe('AESW Research Workstation Frontend', () => {
           graph_type: 'rgg',
           graph_parameters: { radius: 0.28 },
         })
+      );
+    });
+  });
+
+  it('21. Decision Inspector renders M16 candidate breakdown and comparison to alternatives', async () => {
+    const stepResponse = {
+      simulation_id: 'test-sim-123',
+      time: 1,
+      is_terminated: false,
+      termination_status: null,
+      metrics: {
+        ...sampleSimulation.metrics,
+        search_time: 1,
+        total_moves: 1,
+        total_cost: 1.0,
+      },
+      walkers: sampleWalkers.map((w) => ({ ...w, step_count: 1 })),
+      latest_decisions: sampleDecisions,
+    };
+    vi.mocked(api.stepSimulation).mockResolvedValue(stepResponse);
+
+    render(<App />);
+    const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
+    fireEvent.click(genButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/AESW Decision Inspector/i)).toBeInTheDocument();
+    });
+
+    const stepButton = screen.getByRole('button', { name: /STEP \(1\)/i });
+    fireEvent.click(stepButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Selected Destination: Node 1/i)).toBeInTheDocument();
+      expect(screen.getByText(/\+Evidence P\(u\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/\+Novelty N\(u\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/-Revisit R\(u\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/-Delay D\(u\)/i)).toBeInTheDocument();
+      expect(screen.getByText('SELECTED')).toBeInTheDocument();
+    });
+  });
+
+  it('22. Evidence Memory table displays M16 tooltips and formatted polarity sign', async () => {
+    render(<App />);
+    const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
+    fireEvent.click(genButton);
+
+    await waitFor(() => {
+      // Evidence Memory tab is default active tab
+      expect(screen.getByText(/\+ POSITIVE/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/Decayed weight w\(t\) = exp\(-λ̂_t · Δt\)/i)).toBeInTheDocument();
+    });
+  });
+
+  it('23. Top metrics strip displays normal Messages (Q) without baseline notice when AESW is active', async () => {
+    const stepResponse = {
+      simulation_id: 'test-sim-123',
+      time: 1,
+      is_terminated: false,
+      termination_status: null,
+      metrics: {
+        ...sampleSimulation.metrics,
+        total_moves: 2,
+        total_messages: 4,
+        total_cost: 2.4,
+      },
+      walkers: sampleWalkers.map((w) => ({ ...w, step_count: 1 })),
+      latest_decisions: sampleDecisions,
+    };
+    vi.mocked(api.stepSimulation).mockResolvedValue(stepResponse);
+
+    render(<App />);
+    const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
+    fireEvent.click(genButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/test-sim-123/i)).toBeInTheDocument();
+    });
+
+    const stepButton = screen.getByRole('button', { name: /STEP \(1\)/i });
+    fireEvent.click(stepButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Messages \(Q\):/i)).toBeInTheDocument();
+      expect(screen.getByText('4')).toBeInTheDocument();
+      // Should NOT have the communication-free baseline badge
+      expect(screen.queryByText(/No comm/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('24. Top metrics strip displays No comm badge and explanatory tooltip when communication-free baseline is active', async () => {
+    const baselineSimulation = {
+      ...sampleSimulation,
+      algorithm: 'random_walk',
+      is_aesw: false,
+      config: {
+        ...sampleSimulation.config,
+        algorithm: 'random_walk',
+      },
+      metrics: {
+        ...sampleSimulation.metrics,
+        algorithm: 'random_walk',
+        total_messages: 0,
+      },
+    };
+    vi.mocked(api.createSimulation).mockResolvedValue(baselineSimulation);
+    vi.mocked(api.getSimulationMetrics).mockResolvedValue(baselineSimulation.metrics);
+
+    render(<App />);
+
+    // Select Random Walk baseline
+    const algoSelect = screen.getAllByRole('combobox')[0];
+    fireEvent.change(algoSelect, { target: { value: 'random_walk' } });
+
+    const genButton = screen.getByRole('button', { name: /Generate Simulation/i });
+    fireEvent.click(genButton);
+
+    await waitFor(() => {
+      expect(screen.getByText(/test-sim-123/i)).toBeInTheDocument();
+      const messagesLabel = screen.getByText(/Messages \(Q\):/i);
+      expect(messagesLabel).toBeInTheDocument();
+      expect(messagesLabel.parentElement).toHaveTextContent('0');
+      const badge = screen.getByText('No comm');
+      expect(badge).toBeInTheDocument();
+      expect(badge).toHaveAttribute(
+        'title',
+        'Communication-free baseline — this algorithm does not exchange messages (Q = 0 by design).'
       );
     });
   });

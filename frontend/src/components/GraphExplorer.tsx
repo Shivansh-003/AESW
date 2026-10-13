@@ -344,15 +344,28 @@ export const GraphExplorer: React.FC<GraphExplorerProps> = ({
             <span className="w-3 h-3 rounded-full bg-cyan-900 border border-cyan-500 inline-block" />
             <span>Visited Node</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-cyan-500 text-slate-950 font-bold flex items-center justify-center text-[8px]">
-              0
-            </span>
-            <span>Walker Presence</span>
+          <div className="flex items-center gap-1.5" title="Numbered square badges represent active walker positions (Walker 0: Cyan, 1: Emerald, 2: Purple, etc.)">
+            <div className="flex items-center gap-0.5">
+              <span className="w-2.5 h-2.5 rounded-sm bg-cyan-500 text-slate-950 font-bold flex items-center justify-center text-[7px]">
+                0
+              </span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 text-slate-950 font-bold flex items-center justify-center text-[7px]">
+                1
+              </span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-purple-500 text-slate-950 font-bold flex items-center justify-center text-[7px]">
+                2
+              </span>
+            </div>
+            <span>Walkers (by ID)</span>
+          </div>
+          <div className="flex items-center gap-1.5" title="Observed clues cached in walker memory: Green = Positive cue, Gray = Negative / absence">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-slate-500 inline-block" />
+            <span>Evidence (+ / -)</span>
           </div>
           {targetVisible && (
-            <div className="flex items-center gap-1.5 text-amber-400 font-semibold">
-              <span className="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-400 inline-block" />
+            <div className="flex items-center gap-1.5 text-amber-400 font-semibold" title="Ground truth target location (visible only for researcher auditing; invisible to searching agents)">
+              <span className="w-3 h-3 rounded-full bg-amber-500/30 border border-amber-400 inline-block animate-pulse" />
               <span>Target (Ground Truth)</span>
             </div>
           )}

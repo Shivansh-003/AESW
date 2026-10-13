@@ -275,8 +275,11 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
           {/* Cognitive State Badges */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
             {/* Mode */}
-            <div className="bg-graphite-950 p-2 rounded border border-slate-800">
-              <span className="text-[10px] text-slate-500 block mb-0.5">SEARCH MODE</span>
+            <div className="bg-graphite-950 p-2 rounded border border-slate-800" title="Operational Search Mode: LOCAL explores around high-confidence cues; LONG_JUMP executes dispersion when information stagnates.">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[10px] text-slate-500">SEARCH MODE</span>
+                <span className="text-[9px] text-slate-600 font-normal">W=5</span>
+              </div>
               <span
                 className={`font-bold px-1.5 py-0.5 rounded text-[11px] inline-block ${
                   decision?.mode === 'LONG_JUMP'
@@ -289,7 +292,7 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
             </div>
 
             {/* Churn lambda_hat */}
-            <div className="bg-graphite-950 p-2 rounded border border-slate-800">
+            <div className="bg-graphite-950 p-2 rounded border border-slate-800" title="Exponential moving average of observed link churn rate λ̂_t, governing temporal decay of evidence.">
               <span className="text-[10px] text-slate-500 block mb-0.5">CHURN ESTIMATE (λ̂)</span>
               <span className="font-bold text-slate-200 text-sm">
                 {(decision?.estimated_lambda ?? walker.estimated_lambda ?? 0.0).toFixed(4)}
@@ -297,27 +300,131 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
             </div>
 
             {/* Stagnation Counter */}
-            <div className="bg-graphite-950 p-2 rounded border border-slate-800">
-              <span className="text-[10px] text-slate-500 block mb-0.5">STAGNATION STEPS</span>
-              <span className="font-bold text-slate-200 text-sm">
-                {decision?.stagnation_steps ?? walker.stagnation_steps ?? 0}
-              </span>
+            <div className="bg-graphite-950 p-2 rounded border border-slate-800" title="Consecutive decision steps without useful positive/novel evidence. Triggers LONG_JUMP when stagnation ≥ W (W=5).">
+              <div className="flex items-center justify-between mb-0.5">
+                <span className="text-[10px] text-slate-500">STAGNATION</span>
+                <span className="text-[9px] text-slate-600">Threshold: 5</span>
+              </div>
+              <div className="flex items-baseline gap-1.5">
+                <span className="font-bold text-slate-200 text-sm">
+                  {decision?.stagnation_steps ?? walker.stagnation_steps ?? 0}
+                </span>
+                <span className="text-[10px] text-slate-500">/ 5 steps</span>
+              </div>
             </div>
 
             {/* Next Hop Action */}
-            <div className="bg-graphite-950 p-2 rounded border border-slate-800">
+            <div className="bg-graphite-950 p-2 rounded border border-slate-800" title="Action evaluated and dispatched for physical execution on the environment.">
               <span className="text-[10px] text-slate-500 block mb-0.5">SELECTED ACTION</span>
               <div className="flex items-center gap-1 font-bold text-cyan-400 text-xs">
                 <span>{decision?.action_type || walker.recent_action || 'MOVE'}</span>
-                {decision?.destination !== null && decision?.destination !== undefined && (
+                {decision?.destination !== null && decision?.destination !== undefined ? (
                   <>
                     <ArrowRight className="w-3 h-3 text-slate-500" />
                     <span className="text-slate-100">Node {String(decision.destination)}</span>
                   </>
+                ) : (
+                  walker.recent_destination !== null && walker.recent_destination !== undefined && (
+                    <>
+                      <ArrowRight className="w-3 h-3 text-slate-500" />
+                      <span className="text-slate-100">Node {String(walker.recent_destination)}</span>
+                    </>
+                  )
                 )}
               </div>
             </div>
           </div>
+
+          {/* Search Mode Transition & Reason Explanation */}
+          {decision?.mode === 'LONG_JUMP' ? (
+            <div className="bg-amber-950/30 border border-amber-800/60 rounded p-2.5 text-[11px] text-amber-200/90 space-y-1">
+              <div className="font-bold flex items-center justify-between text-amber-300">
+                <span>Mode Transition: LONG_JUMP Dispersion Active</span>
+                <span className="text-[10px] font-mono bg-amber-900/60 px-1.5 py-0.5 rounded text-amber-200">
+                  Stagnation: {decision.stagnation_steps} ≥ 5
+                </span>
+              </div>
+              <p className="text-[10px] text-amber-300/80 leading-relaxed">
+                Walker exceeded the information horizon window W=5 without novel evidence. Local candidate scoring is bypassed in favor of uniform topological dispersion across non-local vertices to escape search stagnation.
+              </p>
+            </div>
+          ) : (
+            <div className="bg-slate-950 p-2 rounded border border-slate-800/80 text-[10px] text-slate-400 flex items-center justify-between">
+              <span>
+                <strong>Mode State:</strong> Exploiting local neighborhood via multi-factor candidate scoring.
+              </span>
+              <span className="text-slate-500 font-mono">
+                {5 - (decision?.stagnation_steps ?? walker.stagnation_steps ?? 0)} steps until dispersion
+              </span>
+            </div>
+          )}
+
+          {/* Selected Candidate Explanation & Multi-Criteria Breakdown */}
+          {decision && decision.candidate_scores.length > 0 && decision.selected_node !== null && decision.selected_node !== undefined && (
+            (() => {
+              const selectedCand = decision.candidate_scores.find(
+                (c) => String(c.node_id) === String(decision.selected_node)
+              );
+              if (!selectedCand) return null;
+
+              // Find top alternative by score
+              const alternatives = decision.candidate_scores
+                .filter((c) => String(c.node_id) !== String(decision.selected_node))
+                .sort((a, b) => b.total_score - a.total_score);
+              const topAlt = alternatives[0];
+              const scoreDiff = topAlt ? selectedCand.total_score - topAlt.total_score : 0;
+
+              return (
+                <div className="bg-graphite-950 rounded border border-cyan-900/50 p-2.5 space-y-2">
+                  <div className="flex items-center justify-between border-b border-slate-800/80 pb-1.5">
+                    <span className="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-cyan-400 inline-block" />
+                      Selected Destination: Node {selectedCand.node_id}
+                    </span>
+                    <div className="flex items-center gap-2 font-mono text-[10px]">
+                      <span className="text-slate-400">Score S(u): <strong className="text-slate-100">{selectedCand.total_score.toFixed(3)}</strong></span>
+                      <span className="px-1.5 py-0.5 rounded bg-cyan-950 border border-cyan-800 text-cyan-300 font-bold">
+                        P={(selectedCand.probability).toFixed(3)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-4 gap-1.5 text-[10px] font-mono text-center">
+                    <div className="bg-slate-900/60 p-1 rounded border border-slate-800" title="Positive evidence strength decayed by churn rate λ̂">
+                      <span className="text-slate-500 block text-[9px]">+Evidence P(u)</span>
+                      <span className="text-emerald-400 font-bold">{selectedCand.positive_evidence.toFixed(3)}</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-1 rounded border border-slate-800" title="Novelty value inversely proportional to visit count: 1 / (1 + visits)">
+                      <span className="text-slate-500 block text-[9px]">+Novelty N(u)</span>
+                      <span className="text-cyan-400 font-bold">{selectedCand.novelty.toFixed(3)}</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-1 rounded border border-slate-800" title="Local revisit count penalty subtracted from score">
+                      <span className="text-slate-500 block text-[9px]">-Revisit R(u)</span>
+                      <span className="text-amber-400 font-bold">-{selectedCand.revisit_penalty.toFixed(1)}</span>
+                    </div>
+                    <div className="bg-slate-900/60 p-1 rounded border border-slate-800" title="Observable edge traversal delay subtracted from score">
+                      <span className="text-slate-500 block text-[9px]">-Delay D(u)</span>
+                      <span className="text-slate-300 font-bold">-{selectedCand.delay.toFixed(1)}</span>
+                    </div>
+                  </div>
+
+                  {topAlt && (
+                    <div className="text-[10px] text-slate-400 pt-1 flex items-center justify-between border-t border-slate-800/60">
+                      <span>
+                        Outranked nearest alternative (<strong>Node {topAlt.node_id}</strong>, S={topAlt.total_score.toFixed(3)}) by{' '}
+                        <strong className="text-cyan-300">
+                          {scoreDiff >= 0 ? `+${scoreDiff.toFixed(3)}` : scoreDiff.toFixed(3)}
+                        </strong>
+                      </span>
+                      <span className="text-slate-500 text-[9px]">
+                        Alt prob: {(topAlt.probability * 100).toFixed(1)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()
+          )}
 
           {/* Candidate Neighbor Ranking Table */}
           <div>
@@ -326,8 +433,8 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
                 <Table className="w-3.5 h-3.5 text-cyan-400" />
                 Active Neighbor Candidate Ranking
               </span>
-              <span className="text-[10px] text-slate-500">
-                S(u) = α·P(u) + β·N(u) - γ·R(u) - δ·D(u)
+              <span className="text-[10px] text-slate-500 font-mono" title="Scoring weights: α=1.0, β=0.5, γ=0.5, δ=0.2 with exploration temperature T=1.0. Unvisited candidates without positive evidence legitimately have identical scores.">
+                S(u) = 1.0·P(u) + 0.5·N(u) - 0.5·R(u) - 0.2·D(u)
               </span>
             </div>
 
@@ -343,12 +450,12 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
                   <thead className="bg-slate-900/80 text-slate-400 border-b border-slate-800 text-[10px]">
                     <tr>
                       <th className="py-1 px-2">Node</th>
-                      <th className="py-1 px-2 text-right">Evidence P(u)</th>
-                      <th className="py-1 px-2 text-right">Novelty N(u)</th>
-                      <th className="py-1 px-2 text-right">Revisit R(u)</th>
-                      <th className="py-1 px-2 text-right">Delay D(u)</th>
-                      <th className="py-1 px-2 text-right">Score S(u)</th>
-                      <th className="py-1 px-2 text-right">Prob P_select</th>
+                      <th className="py-1 px-2 text-right" title="Decayed positive evidence strength in [0.0, 1.0]">Evidence P(u)</th>
+                      <th className="py-1 px-2 text-right" title="Novelty value 1 / (1 + visits) in (0.0, 1.0]">Novelty N(u)</th>
+                      <th className="py-1 px-2 text-right" title="Local visit count frequency">Revisit R(u)</th>
+                      <th className="py-1 px-2 text-right" title="Traversal duration cost (base=1)">Delay D(u)</th>
+                      <th className="py-1 px-2 text-right" title="Composite score S(u)">Score S(u)</th>
+                      <th className="py-1 px-2 text-right" title="Softmax selection probability with temperature T=1.0">Prob P_select</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 font-mono">
@@ -364,6 +471,11 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
                           <td className="py-1 px-2 flex items-center gap-1.5">
                             {isChosen && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 inline-block" />}
                             <span>Node {cand.node_id}</span>
+                            {isChosen && (
+                              <span className="text-[9px] font-sans px-1 rounded bg-cyan-900/80 text-cyan-200">
+                                SELECTED
+                              </span>
+                            )}
                           </td>
                           <td className="py-1 px-2 text-right font-mono text-emerald-400">
                             {cand.positive_evidence.toFixed(3)}
@@ -381,7 +493,11 @@ export const DecisionInspector: React.FC<DecisionInspectorProps> = ({
                             {cand.total_score.toFixed(3)}
                           </td>
                           <td className="py-1 px-2 text-right font-mono">
-                            <span className="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-cyan-300">
+                            <span className={`px-1.5 py-0.5 rounded border text-[10px] ${
+                              isChosen
+                                ? 'bg-cyan-950 border-cyan-700 text-cyan-300 font-bold'
+                                : 'bg-slate-900 border-slate-700 text-slate-300'
+                            }`}>
                               {(cand.probability * 100).toFixed(1)}%
                             </span>
                           </td>

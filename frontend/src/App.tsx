@@ -248,6 +248,8 @@ export const App: React.FC = () => {
       <MetricsStrip
         metrics={metrics}
         totalNodes={graph?.nodes.length || simulation?.config.num_nodes || 0}
+        isAesw={simulation?.is_aesw}
+        algorithm={simulation?.algorithm}
       />
 
       {/* Error Banner */}

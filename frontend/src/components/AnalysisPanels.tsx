@@ -123,14 +123,14 @@ export const AnalysisPanels: React.FC<AnalysisPanelsProps> = ({
               <table className="w-full text-left text-[11px]">
                 <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 text-[10px]">
                   <tr>
-                    <th className="py-1.5 px-2.5">Node</th>
-                    <th className="py-1.5 px-2.5">Walker</th>
-                    <th className="py-1.5 px-2.5">Polarity</th>
-                    <th className="py-1.5 px-2.5 text-right">Base Conf</th>
-                    <th className="py-1.5 px-2.5 text-right">Weight w(t)</th>
-                    <th className="py-1.5 px-2.5 text-right">Effective Conf</th>
-                    <th className="py-1.5 px-2.5 text-right">Age</th>
-                    <th className="py-1.5 px-2.5">Source</th>
+                    <th className="py-1.5 px-2.5" title="Graph vertex identifier where evidence clue was observed">Node</th>
+                    <th className="py-1.5 px-2.5" title="Walker agent that acquired or received this evidence record">Walker</th>
+                    <th className="py-1.5 px-2.5" title="Polarity sign: POSITIVE (sensor trigger / proximity cue) or NEGATIVE (empty node / absence)">Polarity</th>
+                    <th className="py-1.5 px-2.5 text-right" title="Initial observation confidence c_0 prior to churn decay">Base Conf</th>
+                    <th className="py-1.5 px-2.5 text-right" title="Decayed weight w(t) = exp(-λ̂_t · Δt) based on estimated edge churn rate">Weight w(t)</th>
+                    <th className="py-1.5 px-2.5 text-right" title="Effective confidence c(t) = c_0 · w(t) applied to candidate scoring">Effective Conf</th>
+                    <th className="py-1.5 px-2.5 text-right" title="Elapsed simulation steps Δt since evidence creation">Age (Δt)</th>
+                    <th className="py-1.5 px-2.5" title="Provenance: DIRECT_VISIT (local sensor observation) or PUSH/PULL (node-mediated communication exchange)">Source</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 font-mono">
@@ -139,18 +139,18 @@ export const AnalysisPanels: React.FC<AnalysisPanelsProps> = ({
                       <td className="py-1.5 px-2.5 font-bold text-slate-200">
                         Node {item.node_id}
                       </td>
-                      <td className="py-1.5 px-2.5 text-cyan-400">
+                      <td className="py-1.5 px-2.5 text-cyan-400 font-semibold">
                         Walker #{item.walker_id}
                       </td>
                       <td className="py-1.5 px-2.5">
                         <span
-                          className={`px-1.5 py-0.5 rounded text-[10px] ${
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                             item.polarity === 'POSITIVE'
                               ? 'bg-emerald-950/60 text-emerald-400 border border-emerald-800/60'
                               : 'bg-slate-900 text-slate-400 border border-slate-800'
                           }`}
                         >
-                          {item.polarity}
+                          {item.polarity === 'POSITIVE' ? '+ POSITIVE' : '- NEGATIVE'}
                         </span>
                       </td>
                       <td className="py-1.5 px-2.5 text-right text-slate-300">
@@ -159,14 +159,16 @@ export const AnalysisPanels: React.FC<AnalysisPanelsProps> = ({
                       <td className="py-1.5 px-2.5 text-right font-bold text-cyan-300">
                         {item.effective_weight.toFixed(3)}
                       </td>
-                      <td className="py-1.5 px-2.5 text-right text-emerald-300">
+                      <td className="py-1.5 px-2.5 text-right text-emerald-300 font-bold">
                         {item.effective_confidence.toFixed(3)}
                       </td>
                       <td className="py-1.5 px-2.5 text-right text-slate-400">
                         {item.age}
                       </td>
-                      <td className="py-1.5 px-2.5 text-slate-500 text-[10px]">
-                        {item.source}
+                      <td className="py-1.5 px-2.5 text-slate-400 text-[10px]">
+                        <span className="px-1 py-0.5 rounded bg-slate-900 border border-slate-800">
+                          {item.source}
+                        </span>
                       </td>
                     </tr>
                   ))}
