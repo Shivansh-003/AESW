@@ -238,3 +238,24 @@ This document outlines the research implementation roadmap for the decentralized
 - **Status**: *Planned*
 - **Scope**: Synthesis of findings into a structured scientific research manuscript and reproducible artifact bundle.
 
+---
+
+## 22. Milestone 1 — Quantum Integration Foundation
+- **Status**: **Completed**
+- **Scope**:
+  - Typed quantum candidate data contract (`QuantumCandidate`, `QuantumSearchConfig`, `QuantumSearchResult`, `QuantumSearchStatus`).
+  - Candidate preparation and deterministic mapping (`CandidateRegister`) with power-of-two and non-power-of-two ancillary basis padding ($N = 2^{\lceil \log_2(K) \rceil}$).
+  - Target-marking rules and eligibility predicates (`ThresholdMarkingRule`, `PredicateMarkingRule`, `TargetIdMarkingRule`).
+  - Phase-flip quantum oracle interface (`QuantumOracle`, $O |x\rangle = (-1)^{f(x)} |x\rangle$) with query tracking and padded-state exclusion.
+  - Grover search statevector engine (`GroverSearchEngine`) with exact inversion-about-mean diffusion, optimal iteration calculation, and seed-reproducible projective measurement.
+  - 26 automated unit and scientific validation tests (`tests/test_quantum_foundation.py`, 391 total passing suite).
+
+---
+
+## 23. Milestone 2 — Hybrid Quantum Long-Jump Integration
+- **Status**: *Planned*
+- **Scope**:
+  - Integration of `GroverSearchEngine` into `AESWAgent.step()` and `SimulationCoordinator.step()` for stagnation-triggered long jumps.
+  - Candidate pool extraction from shared `EvidenceCache` and local graph observation memory.
+  - Comparative benchmark sweeps evaluating classical AESW vs. Quantum-AESW across dynamic network regimes.
+

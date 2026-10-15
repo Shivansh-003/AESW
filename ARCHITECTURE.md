@@ -76,6 +76,7 @@ The system follows a strict layered design to ensure modularity, separation of c
 - **`aesw.aesw`**: The proposed Adaptive Evidence-Sharing Walkers algorithm, containing churn estimation, exploration/exploitation mode gating, and softmax neighbor selection.
 - **`aesw.memory`**: Dual evidence data structures (positive/negative), node cache management, and adaptive decay functions.
 - **`aesw.evaluation`**: Standardized metric contracts ([`RunMetrics`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/metrics.py), [`AggregatedMetrics`](file:///c:/Users/shiva/OneDrive/Desktop/AESW/src/aesw/evaluation/metrics.py)), episode aggregation, and statistical significance testing.
+- **`aesw.quantum`**: Candidate registration, target-marking rules, quantum oracle operators, and Grover search statevector simulation for quantum-accelerated dispersion.
 - **`aesw.utils`**: Deterministic configuration loading, isolated pseudo-random number generators (`create_rng`), and logging utilities.
 
 ---
